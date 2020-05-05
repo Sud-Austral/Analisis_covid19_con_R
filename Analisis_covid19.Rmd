@@ -94,7 +94,7 @@ str(datos)
 covid19_data<-read_csv("us-counties.csv") #function that reads in csv files
 NJ_covid19<-covid19_data%>%
   dplyr::filter(state == "New Jersey",county != "Unknown") #filters data frame
-NJ_counties=st_read("C:/Users/usuario/Documents/GitHub/covid19/New_Jersey_Counties/data.shp") 
+NJ_counties=st_read("C:/Users/usuario/Documents/GitHub/Analisis_covid19_con_R_y_Python/New_Jersey_Counties/data.shp") 
 plot(st_geometry(NJ_counties))
 
 names(NJ_counties)<-tolower(names(NJ_counties))
