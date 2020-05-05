@@ -1,0 +1,259 @@
+---
+title: "Analisis covid19"
+author: "Christian Castro"
+date: "01-05-2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(reticulate)
+library(kableExtra)
+library(knitr)
+library(tidyverse)
+library(magrittr)
+library(readr) #loads package
+library(dplyr)
+library(sf)
+library(ggplot2) #Used for plotting
+library(gganimate) #Used for animations
+library(RColorBrewer) #Used for color scale 
+```
+
+# Clase 1
+# Carga y limpieza de datos 
+
+
+
+Los datos analizados acá provienen de 
+[DataIntelligence Chile](https://www.google.com)
+
+```{python echo=TRUE, engine.path="C:/Users/usuario/anaconda3/python.exe"}
+
+
+```{r}
+pd <- import("pandas")
+datos <- pd$read_csv("covid_19_clean_complete.csv")
+kable(head(datos, 10))
+```
+
+```{r}
+datos <- read.csv("covid_19_clean_complete.csv")
+kable(head(datos, 10))
+```
+
+```{r}
+datos <- read.csv("covid_19_clean_complete.csv")
+datos %>% head(10) %>% kable()
+```
+
+# Clase 2
+
+```{r}
+str(datos)
+colnames(datos) = c("Provincia_Estado", "Pais_Region", "Latitud", "Longitud", "Fecha", "Casos_Confirmados", "Casos_Muertos", "Casos_Recuperados")
+
+datos %>% head() %>% kable() %>% kable_styling(bootstrap_options = c("striped", "hover"))
+
+```
+
+# Clase 3
+
+* Cualitativas se convierten con `factor` o bien con `as.factor`.
+* Ordinales se convierten con `ordered`.
+* Cuantitativas se convierten con `as.numeric`.
+
+```{r}
+datos$Fecha = ordered(datos$Fecha)
+datos$Provincia_Estado = factor(datos$Provincia_Estado)
+datos$Pais_Region = factor(datos$Pais_Region)
+```
+
+```{r}
+str(datos)
+```
+
+
+
+# Clase 4: la manipulación del dato tipo fecha
+
+```{r}
+
+datos$Provincia_Estado %<>% factor()
+datos$Pais_Region %<>% factor()
+datos$Fecha %<>% as.Date(format="%m/%d/%y")
+str(datos)
+```
+
+# Clase 5 la librería lubridate
+
+
+
+
+```{r}
+covid19_data<-read_csv("us-counties.csv") #function that reads in csv files
+NJ_covid19<-covid19_data%>%
+  dplyr::filter(state == "New Jersey",county != "Unknown") #filters data frame
+NJ_counties=st_read("C:/Users/usuario/Documents/GitHub/covid19/New_Jersey_Counties/data.shp") 
+plot(st_geometry(NJ_counties))
+
+names(NJ_counties)<-tolower(names(NJ_counties))
+
+NJ_counties$county<-tolower(NJ_counties$county)
+
+
+NJ_covid19$county<-tolower(NJ_covid19$county)
+
+NJ_covid19_shapes<-left_join(NJ_covid19,NJ_counties,by="county")%>%
+  dplyr::select(date,county,state,cases,deaths,geometry)
+
+head(NJ_covid19_shapes)
+
+
+NJ_covid19_shapes<-st_as_sf(NJ_covid19_shapes)
+
+
+
+covid_map<-ggplot()+
+  geom_sf(data = NJ_counties,fill = "white")+
+  geom_sf(data = NJ_covid19_shapes,aes(fill=cases))+
+  ggtitle("Spread of COVID-19 Throughout New Jersey")+
+  xlab("")+
+  ylab("")+
+  labs(subtitle = "Date: {current_frame}",
+       caption = "Data Source: The New York Times\nAuthor: Kevin Zolea")+
+  cowplot::background_grid(major = "none", minor = "none") +
+  theme(axis.text.x = element_blank(), axis.ticks.x = element_blank(),
+        axis.text.y = element_blank(), axis.ticks.y = element_blank(),
+        axis.line = element_blank(),
+        legend.background = element_blank(),
+        legend.position=c(-0.3,0.8),
+        plot.background = element_blank(),
+        panel.background = element_blank(),
+        legend.text = element_text(size=12),
+        legend.title = element_text(colour="black", size=12, face="bold"),
+        plot.title=element_text(size=20, face="bold",hjust =0.5),
+        plot.subtitle = element_text(hjust = 0.5,size=12),
+        plot.caption = element_text(size = 11,
+                                    hjust = .5,
+                                    color = "black",
+                                    face = "bold"))+
+  scale_fill_distiller("Number of Positive Cases",
+                       palette ="Reds",type = "div",
+                       direction = 1)+
+  transition_manual(date)
+
+animate(covid_map, nframe=27,fps = 2, end_pause = 15,height = 500, width =500)
+
+
+```
+
+```{r}
+
+library(tidyverse)
+library(janitor)
+library(stringr)
+library(tidyverse)
+library(gganimate)
+library(png)
+options(warn = - 1)  
+gdp <- read.csv("GDP_Data.csv")
+str(gdp)
+head(gdp)
+
+#select required columns
+gdp <- gdp %>% select(3:15)
+
+#filter only country rows
+gdp <- gdp[1:217,]
+
+gdp_tidy <- gdp %>% 
+  mutate_at(vars(contains("YR")),as.numeric) %>% 
+  gather(year,value,3:13) %>% 
+  janitor::clean_names() %>% #fix column name
+  mutate(year = as.numeric(stringr::str_sub(year,1,4)))
+
+
+summary(gdp_tidy)
+
+str(gdp_tidy)
+head(gdp_tidy)
+
+gdp_tidy <- read_csv("gdp_tidy.csv")
+
+summary(gdp_tidy)
+str(gdp_tidy)
+
+head(gdp_tidy)
+
+gdp_formatted <- gdp_tidy %>%
+  group_by(year) %>%
+  # The * 1 makes it possible to have non-integer ranks while sliding
+  mutate(rank = rank(-value),
+         Value_rel = value/value[rank==1],
+         Value_lbl = paste0(" ",round(value/1e9))) %>%
+  group_by(country_name) %>% 
+  filter(rank <=10) %>%
+  ungroup()
+
+staticplot = ggplot(gdp_formatted, aes(rank, group = country_name, 
+                fill = as.factor(country_name), color = as.factor(country_name))) +
+  geom_tile(aes(y = value/2,
+                height = value,
+                width = 0.9), alpha = 0.8, color = NA) +
+  geom_text(aes(y = 0, label = paste(country_name, " ")), vjust = 0.2, hjust = 1) +
+  geom_text(aes(y=value,label = Value_lbl, hjust=0)) +
+  coord_flip(clip = "off", expand = FALSE) +
+  scale_y_continuous(labels = scales::comma) +
+  scale_x_reverse() +
+  guides(color = FALSE, fill = FALSE) +
+  theme(axis.line=element_blank(),
+        axis.text.x=element_blank(),
+        axis.text.y=element_blank(),
+        axis.ticks=element_blank(),
+        axis.title.x=element_blank(),
+         axis.title.y=element_blank(),
+        legend.position="none",
+        panel.background=element_blank(),
+        panel.border=element_blank(),
+        panel.grid.major=element_blank(),
+        panel.grid.minor=element_blank(),
+        panel.grid.major.x = element_line( size=.1, color="grey" ),
+        panel.grid.minor.x = element_line( size=.1, color="grey" ),
+        plot.title=element_text(size=25, hjust=0.5, face="bold", colour="grey", vjust=-1),
+        plot.subtitle=element_text(size=18, hjust=0.5, face="italic", color="grey"),
+        plot.caption =element_text(size=8, hjust=0.5, face="italic", color="grey"),
+        plot.background=element_blank(),
+       plot.margin = margin(2,2, 2, 4, "cm"))
+
+
+anim = staticplot + transition_states(year, transition_length = 4, state_length = 1) +
+  view_follow(fixed_x = TRUE)  +
+  labs(title = 'GDP per Year : {closest_state}',  
+       subtitle  =  "Top 10 Countries",
+       caption  = "GDP in Billions USD | Data Source: World Bank Data")
+
+# For GIF
+animate(anim, 200, fps = 20,  width = 1200, height = 1000, 
+        renderer = gifski_renderer("gganim.gif"))
+
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

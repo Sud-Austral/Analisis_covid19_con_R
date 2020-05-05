@@ -1,0 +1,168 @@
+---
+title: "Seguimiento de los casos de Covid19 en las comunas de las regiones de Chile con R (versión desarrollo)"
+author: "Christian Castro / DataIntelligence Chile"
+date: "03-05-2020"
+output: html_document
+---
+## El objetivo de éste trabajo es crear un mapa animado de series de tiempo que muestre cómo el Covid19 se extiende en las comunas de las regiones de Chile.
+Los datos estudiados provienen de DataIntelligence Chile.
+
+## Comenzaremos por la región de Tarapacá:
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(reticulate)
+library(kableExtra)
+library(knitr)
+library(tidyverse)
+library(magrittr)
+# Para leer los datos usaré el paquete readr:
+library(readr) 
+# Para el data wrangling usaré el paquete dplyr:
+library(dplyr)
+library(sf)
+library(ggplot2) #Used for plotting
+library(gganimate) #Used for animations
+library(RColorBrewer) #Used for color scale 
+```
+
+```{r}
+#Filtrar datos
+#pd <- import("pandas")
+#datos <- pd$read_excel("data_1_mayo.xlsx")
+#head(datos, 10)
+#Siendo que solo queremos ver cómo se ha extendido el covid19 en Tarapacá, filtraremos el data frame para mostrar solo los casos ede Tarapacá. Esto se puede hacer con el paquete dplyr. 
+library(tibble)
+library(readr) 
+# read_csv2 () lee archivos separados por punto y coma (común en países donde, se usa como el decimal)
+covid19_data <- read_csv2("data_1_mayo.csv")
+#str(covid19_data)
+#as_tibble(covid19_data)
+#str(covid19_data)
+covid19_data
+```
+Vemos que la fecha no tiene el formato correcto. Se lo damos:
+
+```{r}
+covid19_data$Fecha %<>% as.Date(format="%d-%m-%y")
+# covid19_data
+head(covid19_data, 10)
+
+#Todas las columnas parecen tener la estructura correcta.
+```
+
+Filtrando los datos
+
+Siendo que solo queremos ver cómo se extendió covid19 en Tarapacá, filtraremos el dataframe para mostrar solo ésos casos. Ésto lo haremos con el paquete dplyr. 
+
+```{r}
+
+
+Tarapaca_covid19<-covid19_data%>%
+  dplyr::filter(Region == "Tarapaca")
+
+Tarapaca_covid19
+```
+
+# Ahora desplegaremos el mapa sólo de la región de Tarapacá:
+
+## Obtener el archivo shape de la región.
+
+## Como el dataframe no tiene shapes, tengo que descargar una carpeta shape con las regiones y municipios de Chile para unirlos al dataframe Tarapaca_covid19. 
+
+La siguiente dirección es un excelente sitio web para descargar datasets espaciales de todos los países del mundo:
+
+# http://www.diva-gis.org/datadown
+
+```{r}
+# Para leer los datos, usaré el paquete sf.
+library(sf)
+CL_comunas=st_read("C:/Users/usuario/Documents/GitHub/covid19/unidades_vecinales_2019/unidades_vecinales_2019.shp") 
+
+# Como podemos ver, el archivo shape se leyó en R.
+
+#CL_comunas
+# plot(st_geometry(CL_comunas))
+
+```
+# Filtremos por unidad geográfica:
+
+```{r}
+Tarapaca_municipios = CL_comunas %>% filter(T_REG_NOM == "TARAPACA")
+plot(st_geometry(Tarapaca_municipios))
+
+```
+Uniendo el shapefile al dataframe 
+
+Esto se puede hacer utilizando la función left_join() del paquete dplyr. La unión se basará en la columna común compartida por ambos conjuntos de datos, que sería la columna Región. 
+
+Primero, necesito poner en minúscula el encabezado de la columna 'Region' en el dataset Tarapaca_covid19 y reemplazar el nombre T_REG_NOM por 'region' en el dataset de los shp. Esto, para que puedan coincidir las columnas 'Región' de ambos datasets. 
+
+Luego, hay que llevar a minúsculas la columna 'Región' en ambos datasets.
+
+```{r}
+colnames(Tarapaca_covid19)
+colnames(Tarapaca_municipios)
+```
+
+```{r}
+names(Tarapaca_covid19)[names(Tarapaca_covid19) == 'Region'] <- 'region' 
+names(Tarapaca_municipios)[names(Tarapaca_municipios) == 'T_REG_NOM'] <- 'region'
+Tarapaca_covid19$region<-tolower(Tarapaca_covid19$region)#Makes all rows in the county column lowercase
+Tarapaca_municipios$region<-tolower(Tarapaca_municipios$region)
+
+#Ahora puedo unir los dos datasets basado en la columna 'region' de ambos.
+
+Tarapaca_covid19_shapes<-left_join(Tarapaca_covid19,Tarapaca_municipios,by="region",all.x = TRUE)%>%
+dplyr::select(Fecha,Comuna,region,Casos_Acumulados,geometry)#selects only the columns of interest
+
+#head(Tarapaca_covid19_shapes)
+head(Tarapaca_covid19_shapes)
+```
+
+```{r}
+#Hacer un mapa con ggplot2 y gganimate
+
+#Toda la parte de manipulación de datos está hecha, ahora puedo comenzar a construir el mapa real. Usaré el paquete ggplot2 junto con el paquete gganimate para crear el mapa final de la serie animada que muestra cómo se extendió el covid19 en la región de Tarapacá.
+
+# Used to make new data frame an sf object
+# Must use st_as_sf in order to use geom_sf() to plot polygons
+
+library(ggplot2) #Used for plotting
+library(gganimate) #Used for animations
+library(RColorBrewer)
+
+Tarapaca_covid19_shapes<-st_as_sf(Tarapaca_covid19_shapes)
+# Makes plot with ggplot2 and gganimate to animate through the days 
+covid_map<-ggplot()+
+  geom_sf(data = Tarapaca_municipios,fill = "white")+
+  geom_sf(data = Tarapaca_covid19_shapes,aes(fill=Casos_Acumulados))+
+  ggtitle("Expansión del COVID-19 en la región de Tarapacá")+
+  xlab("")+
+  ylab("")+
+  labs(subtitle = "Date: {current_frame}",
+       caption = "Fuente de datos: DataIntelligence\nAutor: Christian Castro")+
+  cowplot::background_grid(major = "none", minor = "none") +
+  theme(axis.text.x = element_blank(), axis.ticks.x = element_blank(),
+        axis.text.y = element_blank(), axis.ticks.y = element_blank(),
+        axis.line = element_blank(),
+        legend.background = element_blank(),
+        legend.position=c(-0.3,0.8),
+        plot.background = element_blank(),
+        panel.background = element_blank(),
+        legend.text = element_text(size=12),
+        legend.title = element_text(colour="black", size=12, face="bold"),
+        plot.title=element_text(size=20, face="bold",hjust =0.5),
+        plot.subtitle = element_text(hjust = 0.5,size=12),
+        plot.caption = element_text(size = 11,
+                                    hjust = .5,
+                                    color = "black",
+                                    face = "bold"))+
+  scale_fill_distiller("Casos_Acumulados",
+                       palette ="Reds",type = "div",
+                       direction = 1)+transition_manual(Fecha)
+```
+```{r}
+animate(covid_map, nframe=27,fps = 2, end_pause = 15,height = 500, width =500)
+```
+
