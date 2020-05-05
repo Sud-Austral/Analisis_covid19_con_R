@@ -1,3 +1,3 @@
-# Analisis_covid19_con_R_y_Python
+# Análisis covid19 con R y Python
 
 ![Covid19](/covid19.jpg)
