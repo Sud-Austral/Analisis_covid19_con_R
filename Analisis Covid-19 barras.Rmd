@@ -1,0 +1,86 @@
+---
+title: "Analisis_covid19_barras"
+author: "Christian Castro"
+date: "05-05-2020"
+output: html_document
+---
+
+## Gráficos de barras animados en R
+
+#### El objetivo de esta publicación es explicar cómo construir gráficos animados de barras usando R.
+
+### Paquetes
+
+#### Los paquetes que se requieren para construir tramas animadas en R son:
+
+* ggplot2
+* gganimate
+
+#### Si bien los anteriores paquetes son , también hemos utilizado tidyverse, janitor y scales en este proyecto para la manipulación, limpieza y formateo de datos.
+
+### Datos
+
+#### El conjunto de datos original utilizado para este proyecto proviene de DataIntelligence Chile. 
+### Sobre los datos:
+
+#### Estos datos contienen el valor de los casos acumulados de Covid_19 en cuatro comunas del norte de Chile. Desde el inicio del brote hata Mayo del 2020.
+
+### Preprocesamiento de datos:
+
+#### Usaremos el siguiente código para preparar nuestros datos con el formato deseado. En realidad, estamos limpiando los nombres de las columnas, escribiendo los números en formato numérico y convirtiendo los datos de formato ancho a formato largo utilizando la función gather() de tidyr. Los datos ordenados se guardan en un nuevo archivo csv gdp_tidy.csv para su uso posterior.
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+
+
+
+
+
+```{r}
+
+library(tidyverse)
+library(janitor)
+library(stringr)
+library(tidyverse)
+library(gganimate)
+library(png)
+options(warn = - 1)  
+```
+
+
+```{r}
+library(tibble)
+library(readr) 
+library(tidyverse)
+library(janitor)
+
+barras_con_4_comunas <- read_csv2("con_4_comunas.csv")
+
+#barras_con_4_comunas
+
+#select required columns
+barras_con_4_comunas <- barras_con_4_comunas %>% select(1:61) 
+#filter only country rows
+barras_con_4_comunas <- barras_con_4_comunas[1:5,]
+
+barras_con_4_comunas_tidy <- barras_con_4_comunas %>% 
+  mutate_at(vars(contains("YR")),as.numeric) %>% 
+  gather(date ,value ="Acumulados",2:61) %>%
+ janitor::clean_names() %>% 
+ mutate(date = as.numeric(stringr::str_sub(date,3,7)))
+
+
+#%>% 
+#  janitor::clean_names() %>% 
+#  mutate(fecha = as.numeric(stringr::str_sub(fecha,1,4)))
+write_csv(barras_con_4_comunas_tidy,"con_4_comunas_tidy11.csv")
+
+```
+
+
+
+
+
