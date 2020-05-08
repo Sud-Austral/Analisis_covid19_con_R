@@ -57,30 +57,6 @@ library(readr)
 library(tidyverse)
 library(janitor)
 
-barras_con_4_comunas <- read_csv2("con_4_comunas.csv")
+data_ejercicio_001 <- read_csv2('data_ejercicio_001.csv')
 
 #barras_con_4_comunas
-
-#select required columns
-barras_con_4_comunas <- barras_con_4_comunas %>% select(1:61) 
-#filter only country rows
-barras_con_4_comunas <- barras_con_4_comunas[1:5,]
-
-barras_con_4_comunas_tidy <- barras_con_4_comunas %>% 
-  mutate_at(vars(contains("YR")),as.numeric) %>% 
-  gather(date ,value ="Acumulados",2:61) %>%
- janitor::clean_names() %>% 
- mutate(date = as.numeric(stringr::str_sub(date,3,7)))
-
-
-#%>% 
-#  janitor::clean_names() %>% 
-#  mutate(fecha = as.numeric(stringr::str_sub(fecha,1,4)))
-write_csv(barras_con_4_comunas_tidy,"con_4_comunas_tidy11.csv")
-
-```
-
-
-
-
-
