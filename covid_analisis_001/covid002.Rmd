@@ -1,0 +1,160 @@
+---
+title: "covid001"
+author: "Christian Castro"
+date: "07-05-2020"
+output: html_document
+---
+#### gganimate: How to Create Plots with Beautiful Animation in R
+#### https://www.datanovia.com/en/blog/gganimate-how-to-create-plo
+#### ts-with-beautiful-animation-in-r/
+
+#### Exploring the Gapminder Data with R
+#### http://rstudio-pubs-static.s3.amazonaws.com/492952_32b0b02296
+#### bc452b83639b4f6e07bbfb.html
+
+#### Data Analysis and Prediction Algorithms with R
+#### https://rafalab.github.io/dsbook/
+
+#### http://www.hanselsolutions.com/blog/clustering-time-series.html
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(reticulate)
+library(knitr)
+library(kableExtra)
+library(ggplot2)
+library(reshape2)
+```
+## R 
+```{python engine.path="C:/Users/usuario/anaconda3/python.exe"}
+import pandas as pd
+```
+nuevo dendograma
+```{r, echo=FALSE}
+
+pd <- import("pandas")
+my_data <- pd$read_excel("data_ejercicio_001.xlsx", sep=';')
+
+# Most basic bubble plot
+p <- ggplot(my_data, aes(x=muertes, y=dia1)) +
+  geom_line() + 
+  xlab("")
+p
+
+plot5 <- ggplot(my_data, aes(muertes, dia1, group = 1)) +
+         geom_point() +
+         geom_line() +
+         labs(x = "Year", y = "Particulate matter emissions (tons)", 
+              title = "Motor vehicle emissions in Baltimore")
+
+plot5
+
+
+
+
+# Dissimilarity matrix
+d <- dist(my_data, method = "euclidean")
+
+# Hierarchical clustering using Complete Linkage
+hc1 <- hclust(d, method = "complete" )
+
+# Plot the obtained dendrogram
+plot(hc1, cex = 0.6, hang = -1)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+library(TSclust)
+
+
+
+
+
+data(synthetic.tseries)
+
+plot(synthetic.tseries[,c(1,4,7)])
+
+dCEPS<-diss(synthetic.tseries,"AR.LPC.CEPS")
+hcCEPS<-hclust(dCEPS)
+plot(hcCEPS)
+
+
+
+
+dEUCL<-diss(synthetic.tseries,"EUCL")
+#aplicamoselmismométododecluster
+#queconladistanciabasadaenmodelos
+hcEUCL<-hclust(dEUCL)
+#comparemosvisualmentelasdos
+plot(hcEUCL)
+
+
+```
+
+```{r}
+# Sample data
+n <- 100
+k <- 6
+d <- matrix(rnorm(k*n),nc=k)
+d[,2] <- d[,1]  # To help check the results
+colnames(d) <- LETTERS[1:k]
+x <- apply(d,2,cumsum)
+r <- hclust(dist(t(d)))
+# Plot
+op <- par(mar=c(0,0,0,0),oma=c(0,2,0,0))
+plot(NA,ylim=c(.5,k+.5), xlim=c(0,4),axes=FALSE)
+# Dendrogram. See ?hclust for details.
+xc <- yc <- rep(NA,k)
+o <- 1:k
+o[r$order] <- 1:k
+for(i in 1:(k-1)) {
+  a <- r$merge[i,1]
+  x1 <- if( a<0 ) o[-a] else xc[a]
+  y1 <- if( a<0 ) 0 else yc[a]
+  b <- r$merge[i,2]
+  x2 <- if( b<0 ) o[-b] else xc[b]
+  y2 <- if( b<0 ) 0 else yc[b]
+  lines( 
+    3+c(y1,i,i,y2)/k,
+    c(x1,x1,x2,x2),
+    lwd=k-i
+  )
+  xc[i] <- (x1+x2)/2
+  yc[i] <- i
+}
+# Time series
+axis(2,1:k,colnames(d)[r$order],las=1)
+u <- par()$usr
+for(i in 1:k) {
+  f <- c(0,3,i-.5,i+.5)
+  f <- c( 
+    (f[1]-u[1])/(u[2]-u[1]), 
+    (f[2]-u[1])/(u[2]-u[1]), 
+    (f[3]-u[3])/(u[4]-u[3]), 
+    (f[4]-u[3])/(u[4]-u[3])
+  )
+  par(new=TRUE,fig=f)
+  plot(x[,r$order[i]],axes=FALSE,xlab="",ylab="",main="",type="l",col="navy",lwd=2)
+  box()
+}
+par(op)
+```
+
+
+
+
+
+
+
+
+

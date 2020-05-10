@@ -1,0 +1,109 @@
+---
+title: "Clusters jerárquicos en series de tiempo"
+author: "Christian Castro"
+date: "08-05-2020"
+output:
+  word_document: default
+  html_document: default
+---
+
+
+
+## R 
+
+
+
+
+```{r, echo=FALSE}
+
+#https://www.storybench.org/how-to-use-hierarchical-cluster-analysis-on-time-series-data/
+
+library(tidyverse)
+library(gghighlight)
+library(magrittr)
+```
+
+```{r, echo=FALSE}
+
+library(readr)
+crime <- read_csv2("C:/Users/usuario/Desktop/covid005.csv")
+head(crime, n=10)
+#crime <- read_csv("dc19_001.csv")
+str(crime)
+
+summary(crime)
+```
+
+
+
+```{r, echo=FALSE}
+ggplot(crime, aes(Fecha, Casos_Acumulados, color=Comuna))+
+ geom_line(stat="identity")  +
+    ylab("Casos_Acumulados") +
+  gghighlight(max(Casos_Acumulados) > 100,
+              max_highlight = 3,
+              use_direct_label = TRUE) +
+  theme_minimal() +
+  theme(legend.position = 'none')
+
+
+
+
+Casos_Acumulados <- crime %>%
+  select(Casos_Acumulados, Fecha, Comuna) %>%
+  drop_na() %>% # must drop NAs for clustering to work
+  glimpse()
+
+spread_homs_per_100k <- Casos_Acumulados %>%
+  spread(Comuna, Casos_Acumulados)  %>%
+  glimpse()
+
+murders <- t(spread_homs_per_100k[-1])
+murders_dist <- dist(murders, method="euclidean")  
+fit <- hclust(murders_dist, method="ward.D")  
+
+
+plot(fit, family="Arial")
+rect.hclust(fit, k=5, border="cadetblue")
+
+
+
+
+
+
+library(ggdendro)
+ggdendrogram(fit, rotate = TRUE, theme_dendro = FALSE) +
+  theme_minimal() + xlab("") + ylab("")
+
+
+
+clustered_data <- cutree(fit, k=5)
+clustered_data_tidy <- as.data.frame(as.table(clustered_data)) %>% glimpse()
+
+colnames(clustered_data_tidy) <- c("Comuna","cluster")
+
+clustered_data_tidy$Comuna <- as.character(clustered_data_tidy$Comuna)
+
+joined_clusters <- crime %>%
+  inner_join(clustered_data_tidy, by = "Comuna") %>%
+  glimpse()
+
+table(clustered_data_tidy$cluster)
+
+
+
+
+cluster3 <- joined_clusters %>% filter(cluster == "2") 
+
+
+ggplot(cluster3, aes(Fecha, Casos_Acumulados)) +
+  geom_line(color="grey") +
+  theme_minimal() +
+  ylab("violent crimes per 100K") + xlab("") +
+  geom_smooth(method="auto",color="red", se=F, size=0.5) +
+  facet_wrap(~Comuna)
+
+
+
+```
+

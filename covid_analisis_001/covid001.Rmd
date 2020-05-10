@@ -1,0 +1,53 @@
+---
+title: "covid001"
+author: "Christian Castro"
+date: "07-05-2020"
+output: html_document
+---
+#### gganimate: How to Create Plots with Beautiful Animation in R
+#### https://www.datanovia.com/en/blog/gganimate-how-to-create-plo
+#### ts-with-beautiful-animation-in-r/
+
+#### Exploring the Gapminder Data with R
+#### http://rstudio-pubs-static.s3.amazonaws.com/492952_32b0b02296
+#### bc452b83639b4f6e07bbfb.html
+
+#### Data Analysis and Prediction Algorithms with R
+#### https://rafalab.github.io/dsbook/
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R 
+
+
+
+```{r, echo=FALSE}
+
+library(TSclust)
+datas<-data(synthetic.tseries)
+datas
+plot(synthetic.tseries[,c(1,4,7)])
+dCEPS<-diss(synthetic.tseries,"AR.LPC.CEPS")
+hcCEPS<-hclust(dCEPS)
+
+dEUCL<-diss(synthetic.tseries,"EUCL")
+#aplicamoselmismométododecluster
+#queconladistanciabasadaenmodelos
+hcEUCL<-hclust(dEUCL)
+#comparemosvisualmentelasdos
+plot(hcEUCL)
+plot(hcCEPS)
+
+```
+
+
+
+
+
+
+
+
+
+
