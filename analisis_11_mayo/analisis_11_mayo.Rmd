@@ -10,8 +10,7 @@ knitr::opts_chunk$set(echo = TRUE)
 ```
 
 #### https://rpubs.com/gaston/dendrograms
-#### https://www.storybench.org/how-to-use-hierarchical-cluster-
-#### analysis-on-time-series-data/
+#### https://www.storybench.org/how-to-use-hierarchical-cluster-analysis-on-time-series-data/
 #### R 
 
 ```{r, echo=FALSE}
@@ -28,7 +27,6 @@ library(readr)
 library(ape)
 library(ggdendro)
 
-
 ################################################
 
 covid19_x1 <- read_csv2("C:/Users/usuario/Documents/GitHub/Analisis_covid19_con_R/analisis_11_mayo/covid19_x3.csv")
@@ -42,14 +40,15 @@ summary(covid19_x1)
 ggplot(covid19_x1, aes(Fec, Casos_Acumulados, color=Comuna))+
     geom_line(stat="identity")  +
     ylab("Casos_Acumulados") +
-    gghighlight(max(Casos_Acumulados) > 300,
+    gghighlight(max(Casos_Acumulados) > 600,
         max_highlight = 1,
         use_direct_label = TRUE) +
         theme_minimal() +
         theme(legend.position = 'none')
 
-
 #########################################
+
+# Despliegue del primer dendograma, pero primero hagamos un wrangling a los datos:
 
 Casos_Acumulados <- covid19_x1 %>%
   select(Casos_Acumulados, Fec, Comuna) %>%
@@ -64,17 +63,31 @@ murders <- t(spread_homs_per_100k[-1])
 Casos_Acumulados <- dist(murders, method="euclidean")  
 fit <- hclust(Casos_Acumulados, method="ward.D")  
 
-plot(fit, family="Arial")
+png("dendrograma.png",width=6000,height=2400)
+par(cex=1,font=1)
+plot(fit, family="Arial",  main="Dendrograma de los casos acumulados de Covid19 en las comunas de Chile, agrupados en 5 clusters, del 3 de Marzo al 10 de Mayo del 2020")
 
-rect.hclust(fit, k=5, border="cadetblue")
+# Construimos 5 clusters
+x<- rect.hclust(fit, k=5, border="red")
+x
+dev.off()
 
 #########################################
 # Dendrograma en forma circular:
 
-png("dendograma_circular.png",width=6000,height=2400)
-par(cex=1,font=1)
-plot(as.phylo(fit), type = "fan", main="Dendograma circular")
+png("dendrograma_circular.png",width=6000,height=2400)
+par(cex=1,font=2)
+colors = c("red", "blue", "green", "black")
+clus4 = cutree(fit, 4)
+plot(as.phylo(fit), type = "fan",  main="Dendrograma circular de los casos acumulados de Covid19 en las comunas de Chile, agrupados en 4 clusters,  del 3 de Marzo al 10 de Mayo del 2020", tip.color = colors[clus4], label.offset = 30, cex = 1.3)
 dev.off()
+
+
+par(cex=0.5,font=1)
+colors = c("red", "blue", "green", "black")
+clus4 = cutree(fit, 4)
+plot(as.phylo(fit), type = "fan",  main="Dendrograma circular de los casos acumulados de Covid19 en las comunas de Chile, agrupados en 4 clusters,  del 3 de Marzo al 10 de Mayo del 2020", tip.color = colors[clus4], label.offset = 300, cex = 0.6)
+
 
 #########################################
 
@@ -87,21 +100,7 @@ ggdendrogram(fit, rotate = TRUE,  size = 8,  theme_dendro = FALSE) +
 
 
 
-png("dendograma.png",width=6000,height=2400)
-par(cex=1,font=1)
-plot(fit, hang=-1, main="Dendograma realizado con el método de Ward")
-dev.off()
 
-#########################################
-
-
-
-
-
-colors = c("red", "blue", "green", "black")
-clus4 = cutree(fit, 4)
-plot(as.phylo(fit), type = "fan", tip.color = colors[clus4],
-     label.offset = 30, cex = 0.4)
 
 
 #########################################
@@ -128,5 +127,23 @@ ggplot(cluster3, aes(Fec, Casos_Acumulados)) +
   geom_smooth(method="auto",color="red", se=F, size=1) +
   facet_wrap(~Comuna)
 #################################
+#Analisis de los casos diarios:
+
+ggplot(covid19_x1, aes(Fec, Casos_Activos, color=Comuna))+
+    geom_line(stat="identity")  +
+    ylab("Casos_Activos") +
+    gghighlight(max(Casos_Activos) > 300,
+        max_highlight = 1,
+        use_direct_label = TRUE) +
+        theme_minimal() +
+        theme(legend.position = 'none')
+
+
+
+
+
+
+
+
 
 ```
