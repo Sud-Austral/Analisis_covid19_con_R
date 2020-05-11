@@ -1,0 +1,132 @@
+---
+title: "analisis_11_mayo"
+author: "Christian Castro"
+date: "11-05-2020"
+output: html_document
+---
+
+```{r setup, include=FALSE, echo=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+#### https://rpubs.com/gaston/dendrograms
+#### https://www.storybench.org/how-to-use-hierarchical-cluster-
+#### analysis-on-time-series-data/
+#### R 
+
+```{r, echo=FALSE}
+
+# las dos lineas siguientes impiden el despliegue de advertencias en forma local:
+defaultW <- getOption("warn") 
+options(warn = -1)
+
+library(tidyverse)
+library(gghighlight)
+library(magrittr)
+library(readxl)
+library(readr)
+library(ape)
+library(ggdendro)
+
+
+################################################
+
+covid19_x1 <- read_csv2("C:/Users/usuario/Documents/GitHub/Analisis_covid19_con_R/analisis_11_mayo/covid19_x3.csv")
+
+#covid19_x1$Fecha %<>% as.Date(format="%d/%m/%y")
+
+head(covid19_x1, n=10)
+str(covid19_x1)
+summary(covid19_x1)
+
+ggplot(covid19_x1, aes(Fec, Casos_Acumulados, color=Comuna))+
+    geom_line(stat="identity")  +
+    ylab("Casos_Acumulados") +
+    gghighlight(max(Casos_Acumulados) > 300,
+        max_highlight = 1,
+        use_direct_label = TRUE) +
+        theme_minimal() +
+        theme(legend.position = 'none')
+
+
+#########################################
+
+Casos_Acumulados <- covid19_x1 %>%
+  select(Casos_Acumulados, Fec, Comuna) %>%
+  drop_na() %>% # must drop NAs for clustering to work
+  glimpse()
+
+spread_homs_per_100k <- Casos_Acumulados %>%
+  spread(Comuna,  Casos_Acumulados)  %>%
+  glimpse()
+
+murders <- t(spread_homs_per_100k[-1])
+Casos_Acumulados <- dist(murders, method="euclidean")  
+fit <- hclust(Casos_Acumulados, method="ward.D")  
+
+plot(fit, family="Arial")
+
+rect.hclust(fit, k=5, border="cadetblue")
+
+#########################################
+# Dendrograma en forma circular:
+
+png("dendograma_circular.png",width=6000,height=2400)
+par(cex=1,font=1)
+plot(as.phylo(fit), type = "fan", main="Dendograma circular")
+dev.off()
+
+#########################################
+
+#Visualiza todas las ciudades que pertenecen a un grupo
+
+ggdendrogram(fit, rotate = TRUE,  size = 8,  theme_dendro = FALSE) +
+  theme_minimal() + xlab("") + ylab("")
+
+#########################################
+
+
+
+png("dendograma.png",width=6000,height=2400)
+par(cex=1,font=1)
+plot(fit, hang=-1, main="Dendograma realizado con el método de Ward")
+dev.off()
+
+#########################################
+
+
+
+
+
+colors = c("red", "blue", "green", "black")
+clus4 = cutree(fit, 4)
+plot(as.phylo(fit), type = "fan", tip.color = colors[clus4],
+     label.offset = 30, cex = 0.4)
+
+
+#########################################
+
+clustered_data <- cutree(fit, k=5)
+clustered_data_tidy <- as.data.frame(as.table(clustered_data)) %>% glimpse()
+
+colnames(clustered_data_tidy) <- c("Comuna","cluster")
+
+clustered_data_tidy$Comuna <- as.character(clustered_data_tidy$Comuna)
+
+joined_clusters <- covid19_x1 %>%
+  inner_join(clustered_data_tidy, by = "Comuna") %>%
+  glimpse()
+
+table(clustered_data_tidy$cluster)
+
+cluster3 <- joined_clusters %>% filter(cluster == "2") 
+
+ggplot(cluster3, aes(Fec, Casos_Acumulados)) +
+  geom_line(color="black") +
+  theme_minimal() +
+  ylab("Casos_Acumulados") + xlab("") +
+  geom_smooth(method="auto",color="red", se=F, size=1) +
+  facet_wrap(~Comuna)
+#################################
+
+```
