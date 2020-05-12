@@ -1,0 +1,63 @@
+---
+title: "analisis_12_mayo"
+author: "Christian Castro"
+date: "12-05-2020"
+output: html_document
+---
+
+```{r setup, include=FALSE, echo=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Este documento asocia el codigo R con PowerBI para correrlo limpiamente.
+
+```{r, echo=FALSE}
+
+# las dos lineas siguientes impiden el despliegue de advertencias en forma local:
+defaultW <- getOption("warn") 
+options(warn = -1)
+
+# https://cran.r-project.org/web/packages/dendextend/vignettes/Cluster_Analysis.html
+# install.packages('dendextend', repos = "http://cran.us.r-project.org")
+# install.packages('cluster', repos = "http://cran.us.r-project.org")
+# install.packages('dendextendRcpp', repos = "http://cran.us.r-project.org")
+# install.packages('mclust', repos = "http://cran.us.r-project.org")
+
+# :: Puede haber múltiples funciones con el mismo nombre en múltiples paquetes. El operador dos puntos permite especificar la función específica que se desea, por ejemplo: package::function_name:
+
+#R es un lenguaje de programación estadístico y para hacer estadística necesitamos trabajar con conjuntos de datos (datasets). Estos conjuntos de datos se componen normalmente de Observaciones (o instancias) y Variables (asociadas a dicha observaciones). El dataframe es la estructura fundamental para manipular conjuntos de datos en R, y se utiliza para guardar tablas de datos. Se puede considerar una lista de vectores de igual longitud que no tienen por qué ser del mismo tipo. Los renglones de un data frame admiten datos de distintos tipos, pero sus columnas conservan la restricción de contener datos de un sólo tipo. Un data frame está compuesto por vectores.
+
+# mi_df <- data.frame(
+#   "entero" = 1:4, 
+#   "factor" = c("a", "b", "c", "d"), 
+#   "numero" = c(1.2, 3.4, 4.5, 5.6),
+#   "cadena" = as.character(c("a", "b", "c", "d"))
+# )
+# mi_df
+
+library(tidyverse)
+library(readxl)
+library(data.table)
+covid19 <- read_excel("C:/Users/usuario/Documents/GitHub/Analisis_covid19_con_R/analisis_12_mayo/covid19.xlsx", col_types = c("text", "text","numeric", "numeric", "date", "numeric", "numeric", "numeric", "numeric", "numeric", "numeric", "numeric", "numeric" , "numeric", "text", "numeric" ))
+
+covid19 <- data.table(covid19)
+
+Casos_Acumulados <- covid19 %>%
+  select(Casos_Acumulados, Fec, Comuna) %>%
+  drop_na() %>% # must drop NAs for clustering to work
+  glimpse()
+
+spread_homs_per_100k <- Casos_Acumulados %>%
+  spread(Comuna,  Casos_Acumulados)  %>%
+  glimpse()
+
+murders <- t(spread_homs_per_100k[-1])
+Casos_Acumulados <- dist(murders, method="euclidean")  
+fit <- hclust(Casos_Acumulados, method="ward.D")  
+
+par(cex=0.5,font=1)
+plot(fit, family="Arial",  main="Dendrograma de los casos acumulados de Covid19 en las comunas de Chile, agrupados en 5 clusters, del 3 de Marzo al 10 de Mayo del 2020")
+x<- rect.hclust(fit, k=5, border="red")
+
+```
+

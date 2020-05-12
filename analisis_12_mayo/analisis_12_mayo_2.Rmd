@@ -1,20 +1,17 @@
 ---
-title: "analisis_11_mayo"
+title: "analisis_12_mayo_2"
 author: "Christian Castro"
-date: "11-05-2020"
+date: "12-05-2020"
 output: html_document
 ---
 
-```{r setup, include=FALSE, echo=FALSE}
+```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-#### https://rpubs.com/gaston/dendrograms
-#### https://www.storybench.org/how-to-use-hierarchical-cluster-analysis-on-time-series-data/
-#### R 
+## R Markdown
 
 ```{r, echo=FALSE}
-
 # la siguiente linea impide el despliegue de advertencias en forma local:
 options(warn = -1)
 
@@ -158,5 +155,5 @@ ggplot(covid19_x1, aes(Fec, Casos_Activos, color=Comuna))+
         theme(legend.position = 'none')
 
 
-
 ```
+
