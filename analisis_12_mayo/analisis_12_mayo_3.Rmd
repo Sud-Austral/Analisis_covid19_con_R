@@ -1,0 +1,265 @@
+---
+title: "Análisis Covid19 en Chile"
+author: "DataIntelligence"
+date: "12-05-2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(fig.width=10, fig.height=7, fig.path='Figuras/',
+echo=FALSE, warning=FALSE, message=FALSE)
+```
+
+```{r, include=FALSE}
+# la siguiente linea impide el despliegue de advertencias en forma local:
+options(warn = -1)
+
+library(tidyverse)
+library(gghighlight)
+library(magrittr)
+library(readxl)
+library(readr)
+library(ape)
+library(ggdendro)
+
+covid19 <- read_csv2("C:/Users/usuario/Documents/GitHub/Analisis_covid19_con_R/analisis_11_mayo/covid19.csv")
+
+```
+
+### Comunas que superaron el límite de 600 casos acumulados:
+
+```{r , include=T, results='hide'}
+ggplot(covid19, aes(Fec, Casos_Acumulados, color=Comuna))+
+    geom_line(stat="identity")  +
+    ylab("Casos Acumulados") +
+    gghighlight(max(Casos_Acumulados) > 600,
+        max_highlight = 1,
+        use_direct_label = TRUE) +
+        theme_minimal() +
+        theme(legend.position = 'none')
+```
+
+### Comunas que en algun momento superaron los 300 casos activos:
+
+```{r, include=T, results='hide'}
+ggplot(covid19, aes(Fec, Casos_Activos, color=Comuna))+
+    geom_line(stat="identity")  +
+    ylab("Casos_Activos") +
+    gghighlight(max(Casos_Activos) > 300,
+        max_highlight = 1,
+        use_direct_label = TRUE) +
+        theme_minimal() +
+        theme(legend.position = 'none')
+
+```
+
+### Dendrograma circular de los CASOS ACUMULADOS de Covid19 en las comunas de Chile, agrupados en 6 clusters,  del 3 de Marzo al 10 de Mayo del 2020
+
+```{r , include=T, results='hide'}
+# Despliegue del primer dendograma, pero primero hagamos un wrangling a los datos:
+
+Casos_Acumulados <- covid19 %>%
+  select(Casos_Acumulados, Fec, Comuna) %>%
+  drop_na() %>% # must drop NAs for clustering to work
+  glimpse()
+
+spread_homs_per_100k <- Casos_Acumulados %>%
+  spread(Comuna,  Casos_Acumulados)  %>%
+  glimpse()
+
+murders <- t(spread_homs_per_100k[-1])
+
+Casos_Acumulados <- dist(murders, method="euclidean")  
+
+fit <- hclust(Casos_Acumulados, method="ward.D")  
+
+par(cex=0.5,font=1)
+colors = c("red", "blue", "green", "black", "violet", "darkgreen")
+clus4 = cutree(fit, 6)
+
+plot(as.phylo(fit), type = "fan",  main="", tip.color = colors[clus4], label.offset = 350, cex = 0.6)
+
+```
+
+### Medias condicionales suavizadas (smoothed conditional means) utilizando el metodo LOESS:
+#### La regresión local o regresión polinómica local, también conocida como regresión móvil, es una generalización de la media móvil y la regresión polinómica. Sus métodos más comunes, desarrollados inicialmente para el suavizado de diagrama de dispersión, son LOESS (suavizado de diagrama de dispersión estimado localmente) y LOWESS (suavizado de diagrama de dispersión ponderado localmente)
+
+#### Grupo 1: Altísimo riesgo.
+
+```{r , include=T, results='hide'}
+
+clustered_data <- cutree(fit, k=6)
+clustered_data_tidy <- as.data.frame(as.table(clustered_data)) %>% glimpse()
+colnames(clustered_data_tidy) <- c("Comuna","cluster")
+clustered_data_tidy$Comuna <- as.character(clustered_data_tidy$Comuna)
+joined_clusters <- covid19 %>%inner_join(clustered_data_tidy, by = "Comuna") %>%glimpse()
+table(clustered_data_tidy$cluster)
+
+
+cluster6 <- joined_clusters %>% filter(cluster == "6") 
+ggplot(cluster6, aes(Fec, Casos_Acumulados)) +
+  geom_line(color="black") +
+  theme_minimal() +
+  ylab("Casos_Acumulados") + xlab("dias") +
+  geom_smooth(method="auto",color="red", se=F, size=1) +
+  facet_wrap(~Comuna)+ ggtitle("")
+```
+
+#### Grupo 2: Alto riesgo.
+
+```{r , include=T, results='hide'}
+
+clustered_data <- cutree(fit, k=6)
+clustered_data_tidy <- as.data.frame(as.table(clustered_data)) %>% glimpse()
+colnames(clustered_data_tidy) <- c("Comuna","cluster")
+clustered_data_tidy$Comuna <- as.character(clustered_data_tidy$Comuna)
+joined_clusters <- covid19 %>%inner_join(clustered_data_tidy, by = "Comuna") %>%glimpse()
+table(clustered_data_tidy$cluster)
+
+
+cluster3 <- joined_clusters %>% filter(cluster == "3") 
+ggplot(cluster3, aes(Fec, Casos_Acumulados)) +
+  geom_line(color="black") +
+  theme_minimal() +
+  ylab("Casos_Acumulados") + xlab("dias") +
+  geom_smooth(method="auto",color="red", se=F, size=1) +
+  facet_wrap(~Comuna)+ ggtitle("")
+```
+
+#### Grupo 3: Riesgo medio alto.
+
+```{r , include=T, results='hide'}
+
+clustered_data <- cutree(fit, k=6)
+clustered_data_tidy <- as.data.frame(as.table(clustered_data)) %>% glimpse()
+colnames(clustered_data_tidy) <- c("Comuna","cluster")
+clustered_data_tidy$Comuna <- as.character(clustered_data_tidy$Comuna)
+joined_clusters <- covid19 %>%inner_join(clustered_data_tidy, by = "Comuna") %>%glimpse()
+table(clustered_data_tidy$cluster)
+
+
+cluster5 <- joined_clusters %>% filter(cluster == "5") 
+ggplot(cluster5, aes(Fec, Casos_Acumulados)) +
+  geom_line(color="black") +
+  theme_minimal() +
+  ylab("Casos_Acumulados") + xlab("dias") +
+  geom_smooth(method="auto",color="red", se=F, size=1) +
+  facet_wrap(~Comuna)+ ggtitle("")
+```
+
+#### Grupo 4: Riesgo medio bajo.
+
+```{r , include=T, results='hide'}
+
+clustered_data <- cutree(fit, k=6)
+clustered_data_tidy <- as.data.frame(as.table(clustered_data)) %>% glimpse()
+colnames(clustered_data_tidy) <- c("Comuna","cluster")
+clustered_data_tidy$Comuna <- as.character(clustered_data_tidy$Comuna)
+joined_clusters <- covid19 %>%inner_join(clustered_data_tidy, by = "Comuna") %>%glimpse()
+table(clustered_data_tidy$cluster)
+
+cluster2 <- joined_clusters %>% filter(cluster == "2") 
+ggplot(cluster2, aes(Fec, Casos_Acumulados)) +
+  geom_line(color="black") +
+  theme_minimal() +
+  ylab("Casos_Acumulados") + xlab("dias") +
+  geom_smooth(method="auto",color="red", se=F, size=1) +
+  facet_wrap(~Comuna)+ ggtitle("")
+```
+
+#### Grupo 5: Riesgo bajo.
+
+```{r , include=T, results='hide'}
+
+clustered_data <- cutree(fit, k=6)
+clustered_data_tidy <- as.data.frame(as.table(clustered_data)) %>% glimpse()
+colnames(clustered_data_tidy) <- c("Comuna","cluster")
+clustered_data_tidy$Comuna <- as.character(clustered_data_tidy$Comuna)
+joined_clusters <- covid19 %>%inner_join(clustered_data_tidy, by = "Comuna") %>%glimpse()
+table(clustered_data_tidy$cluster)
+
+cluster4 <- joined_clusters %>% filter(cluster == "4") 
+ggplot(cluster4, aes(Fec, Casos_Acumulados)) +
+  geom_line(color="black") +
+  theme_minimal() +
+  ylab("Casos_Acumulados") + xlab("dias") +
+  geom_smooth(method="auto",color="red", se=F, size=1) +
+  facet_wrap(~Comuna)+ ggtitle("")
+```
+
+#### Grupo 6: Riesgo bajisimo.
+
+```{r , include=T, results='hide'}
+clustered_data <- cutree(fit, k=6)
+clustered_data_tidy <- as.data.frame(as.table(clustered_data)) %>% glimpse()
+colnames(clustered_data_tidy) <- c("Comuna","cluster")
+clustered_data_tidy$Comuna <- as.character(clustered_data_tidy$Comuna)
+joined_clusters <- covid19 %>%inner_join(clustered_data_tidy, by = "Comuna") %>%glimpse()
+table(clustered_data_tidy$cluster)
+
+cluster1 <- joined_clusters %>% filter(cluster == "1") 
+ggplot(cluster1, aes(Fec, Casos_Acumulados)) +
+  geom_line(color="black") +
+  theme_minimal() +
+  ylab("Casos_Acumulados") + xlab("dias") +
+  geom_smooth(method="auto",color="red", se=F, size=1) +
+  facet_wrap(~Comuna)+ ggtitle("")
+```
+
+### El análisis anterior presenta un sesgo poblacional. Así, Punta Arenas y Santiago se agrupan dentro de las comunas de altísimo riesgo, pero la comuna de Santiago tiene 4 veces la población de Punta Arenas. Corregimos:
+
+
+
+
+
+
+
+
+
+
+```{r , include=T, results='hide'}
+
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+### Dendrograma circular de los CASOS ACTIVOS de Covid19 en las comunas de Chile, agrupados en 4 clusters,  del 3 de Marzo al 10 de Mayo del 2020
+
+```{r , include=T, results='hide'}
+# Despliegue del primer dendograma, pero primero hagamos un wrangling a los datos:
+
+Casos_Activos <- covid19 %>%
+  select(Casos_Activos, Fec, Comuna) %>%
+  drop_na() %>% # must drop NAs for clustering to work
+  glimpse()
+
+spread_homs_per_100k <- Casos_Activos %>%
+  spread(Comuna,  Casos_Activos)  %>%
+  glimpse()
+
+murders <- t(spread_homs_per_100k[-1])
+Casos_Activos <- dist(murders, method="euclidean")  
+fit <- hclust(Casos_Activos, method="ward.D")  
+
+par(cex=0.5,font=1)
+colors = c("red", "blue", "green", "black", "violet", "darkgreen")
+clus4 = cutree(fit, 6)
+plot(as.phylo(fit), type = "fan",  main="", tip.color = colors[clus4], label.offset = 350, cex = 0.6)
+
+```
+
+
+
+

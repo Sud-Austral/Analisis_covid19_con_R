@@ -1,0 +1,269 @@
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  TeX: { 
+      equationNumbers: { 
+            autoNumber: "all",
+            formatNumber: function (n) {return +n}
+      } 
+  }
+});
+</script>
+
+
+---
+title: "SIR: El modelo matemático y su implementación con R al caso de la propagación del Covid19 en Chile"
+author: "DataIntelligence"
+date: "14-05-2020"
+output: html_document
+---
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+	echo = TRUE,
+	message = FALSE,
+	warning = FALSE
+)
+library(reticulate)
+library(knitr)
+library(tidyverse)
+library(tidyverse)
+library(gghighlight)
+library(magrittr)
+library(readxl)
+library(readr)
+library(ape)
+library(ggdendro)
+library(bookdown)
+library(janitor)
+
+
+```
+
+<!-- ## R Markdown -->
+
+<!-- ```{python engine.path="C:/Users/usuario/anaconda3/python.exe"} -->
+<!-- import pandas as pd -->
+<!-- datos = pd.read_csv("covid_19_clean_complete.csv") -->
+<!-- datos.head(10) -->
+<!-- ``` -->
+<!-- ```{r} -->
+<!-- pd <- import("pandas") -->
+<!-- datos <- pd$read_csv("covid_19_clean_complete.csv") -->
+<!-- kable(head(datos)) -->
+<!-- ``` -->
+<!-- ```{r} -->
+<!-- datos <- read.csv("covid_19_clean_complete.csv") -->
+<!-- kable(head(datos,10)) -->
+<!-- ``` -->
+
+<!-- ```{r} -->
+<!-- datos <- read.csv("covid_19_clean_complete.csv") -->
+<!-- datos %>% head(10) %>% kable -->
+<!-- ``` -->
+
+<!-- ```{r} -->
+<!-- str(datos) -->
+<!-- ``` -->
+<br/>
+El modelo SIR tiene por objetivo predecir si una epidemia tenderá a expandirse o por el contrario, a disminuir en el transcurso del tiempo.
+Para ello establece tres funciones dependientes del tiempo que representan:
+
+$S\left( t \right)$: La variación del número de personas susceptibles de contraer la enfermedad en el transcurso del tiempo.
+
+$I\left( t \right)$: La variación de la cantidad de infectados en el transcurso del tiempo.
+
+$R\left( t \right)$: La variación de la cantidad de recuperados en el transcurso del tiempo.
+
+Y tres parámetros que representan:
+
+$\beta$: El número medio de contactos por unidad de tiempo.
+
+$\gamma$: El número de recuperados por unidad de tiempo dividido por el total de infectados.
+
+$N$: La población total.
+
+<br/>
+
+El modelo supone que los susceptibles se infectan a cierta tasa y se recuperan a otra (tasas de transicion). Así:
+
+$$
+S\left( t \right) \Rightarrow TDT 1 \Rightarrow  I\left( t \right) \Rightarrow TDT 2 \Rightarrow R \left( t \right)$$
+
+La tasa de transición 1 (TDT1) se define como:$\frac { \beta I\left(t\right)}{N}$
+
+La tasa de transición 2 (TDT2) se define como:$\gamma$
+
+El sistema de ecuaciones diferenciales no lineales que representan lo anterior y que definen al modelo SIR son:
+
+
+$$\frac{dS\left( t \right)}{dt} = - \frac {\beta I\left( t \right) S\left( t \right)}{N}  $$
+$$\frac{dI\left( t \right)}{dt} =  \frac {\beta I\left( t \right) S\left( t \right)}{N} - \gamma I\left( t \right)$$
+$$\frac{dR\left( t \right)}{dt} = \gamma I\left( t \right)$$
+Observemos que en realidad es un sistema de dos ecuaciones diferenciales. Despejemos $\gamma I\left( t \right)$ de la segunda ecuación y reemplacemos el valor en la tercera:
+
+$$\frac{dR\left( t \right)}{dt} = \gamma I\left( t \right) =   \frac {\beta I\left( t \right) S\left( t \right)}{N} - \frac{dI\left( t \right)}{dt}$$
+$$\frac{dR\left( t \right)}{dt} =   \frac {\beta I\left( t \right) S\left( t \right)}{N} - \frac{dI\left( t \right)}{dt}$$
+Reemplacemos el valor del primer término del lado derecho por la primera ecuación:
+
+$$\frac{dR\left( t \right)}{dt} = - \frac{dS\left( t \right)}{dt} - \frac{dI\left( t \right)}{dt}$$
+
+Multipliquemos por $dt$ la expresión e integremos en forma indefinida:
+
+$$ \int dR\left( t \right) = - \int dS\left( t \right) - \int dI\left( t \right)$$
+$$ R\left( t \right) = - S \left( t \right) - I\left( t \right) +C$$
+C en igual a N pues:
+$$ N = R\left( t \right)+ S \left( t \right)+ I\left( t \right) $$
+Entonces:
+$$ R\left( t \right) = - S \left( t \right) - I\left( t \right) +N$$
+Volvamos al sistema de ecuaciones diferenciales originales, despejemos el valor de 
+ $I\left( t \right)$ de la tercera ecuación y dividamos la primera por él:
+ 
+$$\frac{dS\left( t \right)}{dt} = - \frac {\beta I\left( t \right) S\left( t \right)}{N}  $$
+
+$$\frac{dI\left( t \right)}{dt} =  \frac {\beta I\left( t \right) S\left( t \right)}{N} - \gamma I\left( t \right)$$
+
+$$\frac{dR\left( t \right)}{dt} = \gamma I\left( t \right)$$ 
+ 
+ $$ I\left( t \right) =     \frac{dR\left( t \right)}{ \gamma dt } $$ 
+ 
+ $$ \frac{   \frac{dS\left( t \right)}{dt}} { \frac{dR\left( t \right)}{ \gamma dt }}= \frac{ - \frac {\beta I\left( t \right) S\left( t \right)}{N}} {I\left( t \right)}  $$
+ 
+ $$   \frac{dS\left( t \right)}{dt}  \frac{  \gamma dt  } {dR\left( t \right)} =  - \frac {\beta I\left( t \right) S\left( t \right)}{N I\left( t \right)}   $$
+Al lado izquierdo se van los $dt$ y al lado derecho se van los $I(t)$. 
+
+ $$    \frac{ dS\left( t \right) \gamma   } {dR\left( t \right)} =  - \frac {\beta  S\left( t \right)}{N }   $$
+
+Reagrupamos.
+  
+   $$   \frac{dS\left( t \right)}{S\left( t \right)}  {} =  - \frac {\beta  dR\left( t \right)}{\gamma N }   $$
+Integramos definidamente sobre el tiempo entre $0$ y $t$:
+
+   $$  \int_0^t \frac{dS\left( t \right) }{S\left( t \right)}  {} =  -  \frac {\beta   }{\gamma N } \int_0^t   dR\left( t \right)  $$
+
+$$\ln S(t)\Big|_0^t=  - \frac {\beta  R\left( t \right) }{\gamma N }\Big|_0^t$$
+$$\ln S(t)- \ln S(0)=  - \frac {\beta  }{\gamma N } (R(t)-R(0))$$
+Lo que es igual a:
+
+$$\ln \frac { S(t)}{ S(0)}=  - \frac {\beta  }{\gamma N } (R(t)-R(0))$$
+elevamos a $e$ y llevamos el denominador del lado izquierdo al derecho:
+
+$$e^{\ln \frac { S(t)}{ S(0)}} = e^{- \frac {\beta  }{\gamma N } (R(t)-R(0))}$$ 
+$$ S(t) = S(0) e^{- \frac {\beta  }{\gamma N } (R(t)-R(0))}$$ 
+Por definición, en el momento $t=0$:
+
+$S(0) = N$, y
+
+$R(0) = 0$, por lo que la ecuación queda:
+
+$$ S(t) = N e^{- \frac {\beta  }{\gamma N } (R(t))}$$ 
+La expresión $\frac {\beta}{\gamma }$ se denomina <span style="color: red;"> Número Básico de Reproducción</span> $R_0$ y es fundamental, tal como lo veremos a continuación:
+
+Reemplacemos el valor de $R_0$ en la segunda ecuación diferencial del sistema:
+
+$$\frac{dI\left( t \right)}{dt} =  \frac {\beta I\left( t \right) S\left( t \right)}{N} - \gamma I\left( t \right)$$
+
+$$\frac{dI\left( t \right)}{dt} =  \frac {\gamma R_0 I\left( t \right) S\left( t \right)}{N} - \gamma I\left( t \right)$$
+
+$$\frac{dI\left( t \right)}{dt} =  [\frac { R_0  S\left( t \right)}{N}-1]  \gamma I\left( t \right)$$
+La tasa de propagación de la infección queda definida entonces por la expresión:
+
+$$\frac { R_0  S\left( t \right)}{N}-1$$
+Si: 
+
+$$\frac { R_0  S\left( t \right)}{N}-1 >0 $$
+
+o bien $$\frac { R_0  S\left( t \right)}{N} >1 $$
+
+$$\frac{dI\left( t \right)}{dt} > 0$$
+
+y la tasa de propagación de la enfermedad crecerá.
+
+Por el contrario, si $$\frac { R_0  S\left( t \right)}{N}<1$$ decrecerá.
+
+<br/>
+
+#### Estimación de $R_0$ por medio de una regresión lineal
+
+Supongamos que: $$\frac { R_0  S\left( t \right)}{N}<1$$
+
+Por lo tanto:
+
+$$ R_0 < \frac {N}{ S\left( t \right)}$$
+
+ya obtuvimos según (26) que:$$ S(t) = N e^{- \frac {\beta  }{\gamma N } (R(t))}$$ 
+
+entonces: 
+
+$$ { R_0  } <   e^{ \frac {\beta  }{\gamma N } (R(t))} $$
+ 
+$$ { R_0  } <   e^{ \frac {R_0 R(t)} {N}}$$
+lo que indica que en el momento $t$ la epidemia tenderá a disminuir y viceversa.
+
+La estimación de $R_0$ la obtenemos de (37):
+
+$$ S(t) = N e^{- \frac {R_0 R(t)}{ N } }$$ 
+$$  \ln \frac {S(t)}{N} = \ln e^{- \frac {R_0 R(t)}{ N } }$$
+$$  \ln S(t) = \ln N - \frac {R_0 R(t)}{ N } $$
+$$   N \ln S(t) = N \ln N -  {R_0 R(t)} $$
+
+y tenemos una función lineal sobre la cual podemos aplicar una regresión. El número básico de reproducción (cambiándole el signo) es la pendiente de la recta de regresión.
+
+El paso final es comparar los valores de $R_0$ con $e^{\frac {R_0R(t)}{ N }}$, donde $t$ es el momento final.
+
+<br/>
+
+#### Implementación del cálculo de $R_0$ en R
+
+```{r}
+#Cargamos la base de datos:
+#covid19 <- read_csv2("C:/Users/usuario/Documents/GitHub/Analisis_covid19_con_R/analisis_13_mayo_SIR/covid19cc.csv")
+library(readxl)
+
+covid19 <- read_xlsx("C:/Users/usuario/Documents/GitHub/Analisis_covid19_con_R/analisis_13_mayo_SIR/covid19cc.xlsx")
+str(covid19)
+
+covid19.metro = covid19[covid19$Comuna=="Santiago",]
+
+# podemos convertir los valores de fecha numéricos de Excel en información de fecha mediante el uso de la función "excel_numeric_to_date" del paquete "janitor".
+
+covid19.metro$Fecha <- excel_numeric_to_date(covid19.metro$Fecha)
+
+str(covid19.metro)
+
+
+tabla.metro = data.frame(covid19.metro)
+str(tabla.metro)
+# 
+# head(tabla.metro,10)
+
+# # Obtengamos el numero de habitantes de la ciudad de Santiago:
+pop_santiago <- 404495
+
+# Calculamos los infectados, los recuperados y los susceptibles por dias:
+# # 
+infectados.por.dia = aggregate(tabla.metro$Casos_Diarios~tabla.metro$Fecha,FUN=sum)
+
+infectados.por.dia
+
+recuperados.por.dia = aggregate(tabla.metro$Recuperados_Diarios~tabla.metro$Fecha,FUN=sum)
+
+recuperados.por.dia
+
+tabla.santiago = data.frame(covid19.metro$Fecha, infectados.por.dia, recuperados.por.dia)
+
+tabla.santiago<-tabla.santiago %>% mutate(suma_rec_inf = cumsum(tabla.metro.Casos_Diarios+tabla.metro.Recuperados_Diarios))
+
+tabla.santiago<-tabla.santiago %>% mutate(susceptibles = pop_santiago - cumsum(tabla.metro.Casos_Diarios+tabla.metro.Recuperados_Diarios))
+
+tabla.santiago
+
+```
+
+
+
+
+
+
+
+
+
+

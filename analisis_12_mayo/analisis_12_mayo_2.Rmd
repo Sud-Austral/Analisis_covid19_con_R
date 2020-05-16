@@ -1,17 +1,18 @@
 ---
-title: "analisis_12_mayo_2"
-author: "Christian Castro"
+title: "Análisis Covid19 en Chile"
+author: "DataIntelligence"
 date: "12-05-2020"
 output: html_document
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(fig.width=10, fig.height=7, fig.path='Figuras/',
+echo=FALSE, warning=FALSE, message=FALSE)
 ```
 
-## R Markdown
 
-```{r, echo=FALSE}
+
+```{r, include=FALSE}
 # la siguiente linea impide el despliegue de advertencias en forma local:
 options(warn = -1)
 
@@ -23,31 +24,46 @@ library(readr)
 library(ape)
 library(ggdendro)
 
-################################################
-
 covid19_x1 <- read_csv2("C:/Users/usuario/Documents/GitHub/Analisis_covid19_con_R/analisis_11_mayo/covid19.csv")
 
 #covid19_x1$Fecha %<>% as.Date(format="%d/%m/%y")
 
-head(covid19_x1, n=10)
-str(covid19_x1)
-summary(covid19_x1)
+# head(covid19_x1, n=10)
+# str(covid19_x1)
+# summary(covid19_x1)
 
+```
+
+### Comunas que superaron el límite de 600 casos acumulados:
+
+```{r , include=T, results='hide'}
 ggplot(covid19_x1, aes(Fec, Casos_Acumulados, color=Comuna))+
     geom_line(stat="identity")  +
-    ylab("Casos_Acumulados") +
+    ylab("Casos Acumulados") +
     gghighlight(max(Casos_Acumulados) > 600,
         max_highlight = 1,
         use_direct_label = TRUE) +
         theme_minimal() +
         theme(legend.position = 'none')
+```
 
-#########################################
+### Comunas que en algun momento superaron los 300 casos activos:
 
+```{r, include=T, results='hide'}
+ggplot(covid19_x1, aes(Fec, Casos_Activos, color=Comuna))+
+    geom_line(stat="identity")  +
+    ylab("Casos_Activos") +
+    gghighlight(max(Casos_Activos) > 300,
+        max_highlight = 1,
+        use_direct_label = TRUE) +
+        theme_minimal() +
+        theme(legend.position = 'none')
 
+```
 
-#########################################
+### Dendrograma circular de los CASOS ACUMULADOS de Covid19 en las comunas de Chile, agrupados en 6 clusters,  del 3 de Marzo al 10 de Mayo del 2020
 
+```{r , include=T, results='hide'}
 # Despliegue del primer dendograma, pero primero hagamos un wrangling a los datos:
 
 Casos_Acumulados <- covid19_x1 %>%
@@ -63,56 +79,93 @@ murders <- t(spread_homs_per_100k[-1])
 Casos_Acumulados <- dist(murders, method="euclidean")  
 fit <- hclust(Casos_Acumulados, method="ward.D")  
 
-png("dendrograma.png",width=6000,height=2400)
-par(cex=1,font=1)
-plot(fit, family="Arial",  main="Dendrograma de los casos acumulados de Covid19 en las comunas de Chile, agrupados en 5 clusters, del 3 de Marzo al 10 de Mayo del 2020")
+# png("dendrograma.png",width=6000,height=2400)
+# par(cex=1,font=1)
+# plot(fit, family="Arial",  main="Dendrograma de los casos acumulados de Covid19 en las comunas de Chile, agrupados en 5 clusters, del 3 de Marzo al 10 de Mayo del 2020")
 # Construimos 5 clusters
-x<- rect.hclust(fit, k=5, border="red")
-x
-dev.off()
+# x<- rect.hclust(fit, k=5, border="red")
+# x
+#dev.off()
 
-par(cex=0.5,font=1)
-plot(fit, family="Arial",  main="Dendrograma de los casos acumulados de Covid19 en las comunas de Chile, agrupados en 5 clusters, del 3 de Marzo al 10 de Mayo del 2020")
-x<- rect.hclust(fit, k=5, border="red")
+# par(cex=0.5,font=1)
+# plot(fit, family="Arial",  main="Dendrograma de los casos acumulados de Covid19 en las comunas de Chile, agrupados en 5 clusters, del 3 de Marzo al 10 de Mayo del 2020")
+# x<- rect.hclust(fit, k=6, border="red")
 
 #########################################
 # Dendrograma en forma circular:
 
-png("dendrograma_circular.png",width=6000,height=2400)
-par(cex=1,font=2)
-colors = c("red", "blue", "green", "black", "violet")
-clus4 = cutree(fit, 5)
-plot(as.phylo(fit), type = "fan",  main="Dendrograma circular de los casos acumulados de Covid19 en las comunas de Chile, agrupados en 4 clusters,  del 3 de Marzo al 10 de Mayo del 2020", tip.color = colors[clus4], label.offset = 30, cex = 1.3)
-dev.off()
-
-
 par(cex=0.5,font=1)
-colors = c("red", "blue", "green", "black", "violet")
-clus4 = cutree(fit, 5)
-plot(as.phylo(fit), type = "fan",  main="Dendrograma circular de los casos acumulados de Covid19 en las comunas de Chile, agrupados en 4 clusters,  del 3 de Marzo al 10 de Mayo del 2020", tip.color = colors[clus4], label.offset = 300, cex = 0.6)
+colors = c("red", "blue", "green", "black", "violet", "darkgreen")
+clus4 = cutree(fit, 6)
+plot(as.phylo(fit), type = "fan",  main="", tip.color = colors[clus4], label.offset = 350, cex = 0.6)
 
+```
+
+### Dendrograma circular de los CASOS ACTIVOS de Covid19 en las comunas de Chile, agrupados en 4 clusters,  del 3 de Marzo al 10 de Mayo del 2020
+
+```{r , include=T, results='hide'}
+# Despliegue del primer dendograma, pero primero hagamos un wrangling a los datos:
+
+Casos_Activos <- covid19_x1 %>%
+  select(Casos_Activos, Fec, Comuna) %>%
+  drop_na() %>% # must drop NAs for clustering to work
+  glimpse()
+
+spread_homs_per_100k <- Casos_Activos %>%
+  spread(Comuna,  Casos_Activos)  %>%
+  glimpse()
+
+murders <- t(spread_homs_per_100k[-1])
+Casos_Activos <- dist(murders, method="euclidean")  
+fit <- hclust(Casos_Activos, method="ward.D")  
+
+# png("dendrograma.png",width=6000,height=2400)
+# par(cex=1,font=1)
+# plot(fit, family="Arial",  main="Dendrograma de los casos acumulados de Covid19 en las comunas de Chile, agrupados en 5 clusters, del 3 de Marzo al 10 de Mayo del 2020")
+# Construimos 5 clusters
+# x<- rect.hclust(fit, k=5, border="red")
+# x
+#dev.off()
+
+# par(cex=0.5,font=1)
+# plot(fit, family="Arial",  main="Dendrograma de los casos acumulados de Covid19 en las comunas de Chile, agrupados en 5 clusters, del 3 de Marzo al 10 de Mayo del 2020")
+# x<- rect.hclust(fit, k=6, border="red")
 
 #########################################
+# Dendrograma en forma circular:
 
-#Visualiza todas las ciudades que pertenecen a un grupo
+par(cex=0.5,font=1)
+colors = c("red", "blue", "green", "black", "violet", "darkgreen")
+clus4 = cutree(fit, 6)
+plot(as.phylo(fit), type = "fan",  main="", tip.color = colors[clus4], label.offset = 350, cex = 0.6)
 
-ggdendrogram(fit, rotate = TRUE,  size = 8,  theme_dendro = FALSE) +
-  theme_minimal() + xlab("") + ylab("")
+```
+
+
+
+
+
+```{r , include=T, results='hide'}
+#########################################
+
+# giramos 90 grados el dendrograma:
+
+ # ggdendrogram(fit, rotate = TRUE,  size = 8,  theme_dendro = FALSE) + 
+ #  theme_minimal() + xlab("") + ylab("") 
 
 #########################################
 # Distancia euclidea aplicada sobre todo el set de datos:
 
-dist <- dist(covid19_x1[ , c(7:9)] , diag=TRUE)
-hc <- hclust(dist)
-png("dendrograma_total.png",width=6000,height=2400)
-par(cex=1,font=1)
-plot(hc)
-dev.off()
+# dist <- dist(covid19_x1[ , c(7:9)] , diag=TRUE)
+# hc <- hclust(dist)
+# png("dendrograma_total.png",width=6000,height=2400)
+# par(cex=1,font=1)
+# plot(hc)
+# dev.off()
 
 #########################################
-png("spline_smooth.png",width=1000,height=500)
-par(cex=1,font=2)
-
+```
+```{r , include=T, results='hide'}
 clustered_data <- cutree(fit, k=5)
 clustered_data_tidy <- as.data.frame(as.table(clustered_data)) %>% glimpse()
 colnames(clustered_data_tidy) <- c("Comuna","cluster")
@@ -127,32 +180,7 @@ ggplot(cluster3, aes(Fec, Casos_Acumulados)) +
   geom_smooth(method="auto",color="red", se=F, size=1) +
   facet_wrap(~Comuna)+ ggtitle("Casos acumulados por dia en el cluster mas extremo (el quinto) y curva spline smooth")
 
-dev.off()
 
-clustered_data <- cutree(fit, k=5)
-clustered_data_tidy <- as.data.frame(as.table(clustered_data)) %>% glimpse()
-colnames(clustered_data_tidy) <- c("Comuna","cluster")
-clustered_data_tidy$Comuna <- as.character(clustered_data_tidy$Comuna)
-joined_clusters <- covid19_x1 %>%inner_join(clustered_data_tidy, by = "Comuna") %>%glimpse()
-table(clustered_data_tidy$cluster)
-cluster3 <- joined_clusters %>% filter(cluster == "5") 
-ggplot(cluster3, aes(Fec, Casos_Acumulados)) +
-  geom_line(color="black") +
-  theme_minimal() +
-  ylab("Casos_Acumulados") + xlab("dias") +
-  geom_smooth(method="auto",color="red", se=F, size=1) +
-  facet_wrap(~Comuna)+ ggtitle("Casos acumulados por dia en el cluster mas extremo (el quinto) y curva spline smooth")
-#################################
-#Analisis de los casos diarios:
-
-ggplot(covid19_x1, aes(Fec, Casos_Activos, color=Comuna))+
-    geom_line(stat="identity")  +
-    ylab("Casos_Activos") +
-    gghighlight(max(Casos_Activos) > 300,
-        max_highlight = 1,
-        use_direct_label = TRUE) +
-        theme_minimal() +
-        theme(legend.position = 'none')
 
 
 ```

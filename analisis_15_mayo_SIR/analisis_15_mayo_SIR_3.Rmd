@@ -1,0 +1,108 @@
+---
+title: "Analisis geoespacial con R, de la epidemia Covid19 en Santiago"
+author: "DataIntelligence"
+date: "15-05-2020"
+output: html_document
+---
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+	echo = TRUE,
+	message = FALSE,
+	warning = FALSE
+)
+```
+```{r cuerpo, include=FALSE}
+library(rnaturalearth)
+library(ggplot2)
+library(reticulate)
+library(knitr)
+library(tidyverse)
+library(gghighlight)
+library(magrittr)
+library(readxl)
+library(readr)
+library(ape)
+library(ggdendro)
+library(bookdown)
+library(janitor)
+require(rgdal)
+require(ggplot2)
+library(sf)
+
+shp_comunas_chile = st_read("C:/Users/usuario/Documents/GitHub/Analisis_covid19_con_R/analisis_15_mayo_SIR/shapes_de_chile/comunas.shp") 
+
+shp_comunas_rm = shp_comunas_chile %>% filter(Region == "Región Metropolitana de Santiago")
+
+#st_write(shp_comunas_rm,"shp_comunas_rm.shp")
+
+shp_comunas_rm=st_read("C:/Users/usuario/Documents/GitHub/Analisis_covid19_con_R/analisis_15_mayo_SIR/shp_comunas_rm.shp") 
+
+ggplot(shp_comunas_rm) + geom_sf(aes(fill = Comuna)) +  guides(fill = "none")
+
+######################
+######################
+######################
+
+
+covid19 <- read_xlsx("C:/Users/usuario/Documents/GitHub/Analisis_covid19_con_R/analisis_15_mayo_SIR/covid19cc.xlsx")
+
+# Aca hay un error porque selecciono solo la comuna de santiago, lo que yo quiero es obtener todas las comunas de la region metropolitana.
+
+
+covid19_sant = covid19[covid19$Region=="Metropolitana",]
+colnames(covid19_sant)[3] <- "cod_comuna"
+#covid19_sant$Fecha <- excel_numeric_to_date(covid19_sant$Fecha)
+
+head(covid19_sant,20)
+
+
+head(shp_comunas_rm,20)
+
+data_rm<-left_join(covid19_sant,shp_comunas_rm,by="cod_comuna")
+# data_rm<-left_join(covid19_sant,shp_comunas_rm,by="cod_comuna",all.x = TRUE)
+# %>% dplyr::select(Comuna.x,Fec, Fecha,Casos_Acumulados,geometry)
+
+#tabla unida
+head(data_rm)
+
+data_rm<-st_as_sf(data_rm)
+head(data_rm)
+
+data_rm_30 = (data_rm %>% filter(Fec == 30))
+head(data_rm_30,10)
+
+data_rm_50 = (data_rm %>% filter(Fec == 50))
+head(data_rm_50,10)
+
+# ggplot(data_rm_30 )+
+#   geom_sf(data = shp_comunas_rm,fill = "white")+
+#   geom_sf(data =  data_rm %>% filter(Fec == 30),aes(fill=Casos_Acumulados))+
+#   ggtitle("Expansión del COVID-19 en la Región Metropolitana")
+# 
+# ggplot(data_rm_50 )+
+#   geom_sf(data = shp_comunas_rm,fill = "white")+
+#   geom_sf(data = data_rm %>% filter(Fec == 50),aes(fill=Casos_Acumulados))+
+#   ggtitle("Expansión del COVID-19 en la Región Metropolitana")
+# # 
+# head(comunas_santiago_data_u)
+# 
+# ggplot(data_rm) + geom_sf(aes(fill = Comuna.x)) +  guides(fill = "none")
+# ggplot(shp_brasil_datos %>% filter(gini != "NA")) +
+#   geom_sf(aes(fill = gini)) 
+```
+
+
+
+```{r cuerpo2}
+library(gganimate)
+
+e <- ggplot(data_rm)+
+  geom_sf(aes(fill=Casos_Acumulados))+
+  transition_manual(Fec)+
+  labs(subtitle = "Día transcurrido de la pandemia en Santiago: {current_frame}")
+
+animate(e)
+```
+
+
+

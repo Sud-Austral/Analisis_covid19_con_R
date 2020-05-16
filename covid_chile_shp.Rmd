@@ -77,7 +77,7 @@ La siguiente dirección es un excelente sitio web para descargar datasets espaci
 ```{r}
 # Para leer los datos, usaré el paquete sf.
 library(sf)
-CL_comunas=st_read("C:/Users/usuario/Documents/GitHub/Analisis_covid19_con_R_y_Python/unidades_vecinales_2019/unidades_vecinales_2019.shp") 
+CL_comunas=st_read("C:/Users/usuario/Documents/GitHub/Analisis_covid19_con_R/analisis_15_mayo_SIR/shapes_de_chile/unidades_vecinales_2019.shp")                                                                          
 
 # Como podemos ver, el archivo shape se leyó en R.
 
