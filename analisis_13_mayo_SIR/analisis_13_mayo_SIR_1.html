@@ -671,7 +671,6 @@ recuperados.por.dia</code></pre>
 ## 58        2020-05-10                              26</code></pre>
 <pre class="r"><code>tabla.santiago = data.frame(covid19.metro$Fecha, infectados.por.dia, recuperados.por.dia)
 
-
 tabla.santiago&lt;-tabla.santiago %&gt;% mutate(suma_rec_inf = cumsum(tabla.metro.Casos_Diarios+tabla.metro.Recuperados_Diarios))
 
 tabla.santiago&lt;-tabla.santiago %&gt;% mutate(susceptibles = pop_santiago - cumsum(tabla.metro.Casos_Diarios+tabla.metro.Recuperados_Diarios))
@@ -854,35 +853,6 @@ tabla.santiago</code></pre>
 ## 56       403123
 ## 57       403120
 ## 58       403094</code></pre>
-<pre class="r"><code># 
-# susceptibles.por.dia &lt;- pop_santiago
-# 
-# acum&lt;-0
-# for (val in tabla.santiago$tabla.metro.Casos_Diarios)
-#    {
-# 
-# 
-# m &lt;-tabla.santiago$tabla.metro.Casos_Diarios + tabla.santiago$tabla.metro.Recuperados_Diarios
-# 
-# acum &lt;- acum + m
-# 
-# }
-# 
-# 
-# 
-# 
-# acum
-# val
-# # 
-# # Creamos la tabla Santiago con toda la informacion:
-# # 
-# tabla.santiago = data.frame((tabla.metro$Fecha), susceptibles.por.dia, infectados.por.dia, recuperados.por.dia )
-# # 
-# # # Les asignamos nombres a las columnas de nuestra tabla recien creada:
-# # 
-# names(tabla.santiago) = c(&quot;Fecha&quot;, &quot;Susceptibles&quot;, &quot;Infectados&quot;, &quot;Recuperados&quot;)
-# # 
-# head(tabla.santiago,10)</code></pre>
 </div>
 
 

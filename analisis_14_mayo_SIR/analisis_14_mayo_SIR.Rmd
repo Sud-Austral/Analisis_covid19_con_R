@@ -221,7 +221,7 @@ library(readxl)
 covid19 <- read_xlsx("C:/Users/usuario/Documents/GitHub/Analisis_covid19_con_R/analisis_13_mayo_SIR/covid19cc.xlsx")
 str(covid19)
 
-covid19.metro = covid19[covid19$Comuna=="Santiago",]
+covid19.metro = covid19[covid19$Comuna=="Cerrillos",]
 
 # podemos convertir los valores de fecha numéricos de Excel en información de fecha mediante el uso de la función "excel_numeric_to_date" del paquete "janitor".
 
