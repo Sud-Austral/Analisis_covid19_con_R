@@ -1,0 +1,176 @@
+---
+title: "Análisis del $R_0$ relacionado con la pobreza: clusters y correlaciones."
+author: "DataIntelligence"
+date: "19-05-2020"
+output: html_document
+---
+
+```{r setup, include=FALSE, echo=FALSE}
+knitr::opts_chunk$set(echo = TRUE,
+                      message = FALSE,
+                      warning = FALSE)
+
+#http://www.sthda.com/english/wiki/beautiful-dendrogram-visualizations-in-r-5-must-known-methods-unsupervised-machine-learning
+```
+
+```{r, echo=FALSE, fig.width=10, fig.height=10}
+library(janitor)
+library(dplyr)
+library(readxl)
+library(factoextra)
+library(ggpubr)
+
+# la siguiente linea impide el despliegue de advertencias en forma local:
+options(warn = -1)
+library(dendextend)
+library(tidyverse)
+library(gghighlight)
+library(magrittr)
+library(readxl)
+library(readr)
+library(ape)
+library(ggdendro)
+library(dummies)
+library(kableExtra)
+# vary parameters for most readable graph
+library(cluster)
+
+# Centroid Plot against 1st 2 discriminant functions
+library(fpc)
+
+covid19_sin_title_com <-
+  read_xlsx(
+    "C:/Users/usuario/Documents/GitHub/Analisis_covid19_con_R/SIR_19_mayo_graficas/covid19_sin_title_com.xlsx"
+  )
+```
+
+
+
+### Datos originales.
+
+Se muestran los primeros 10 registros del set de datos sobre el cual se trabaja.
+
+```{r, echo=FALSE}
+covid19 <-
+  read_xlsx(
+    "C:/Users/usuario/Documents/GitHub/Analisis_covid19_con_R/SIR_19_mayo_graficas/covid19cccc.xlsx"
+  )
+
+covid19$r0 = as.numeric(covid19$r0)
+kable(head(covid19,10),format = "markdown")
+```
+
+### Despliegue del dendrograma de Comunas y $R_0$
+
+Un dendrograma es la representación gráfica en una forma de árbol que resume el proceso de  agrupación de un análisis  de  clusters.  Los  objetos  similares  se  conectan  mediante enlaces    cuya    posición en el    diagrama    está    determinada    por    el    nivel    de similitud/disimilitud entre ellos.
+El  Análisis  de  Clusters  (o  Análisis  de  conglomerados)  es  una  técnica  de Análisis  Exploratorio  de Datos  para  resolver  problemas  de  clasificación.  Su objetivo  consiste  en  ordenar  cosas  en  grupos   de  forma  que  el grado  de  asociación/similitud  entre  miembros  del  mismo  cluster  sea  más fuerte  que  el  grado  de  asociación/similitud  entre  miembros  de  diferentes clusters.  Cada  cluster  se  describe  como  la  clase  a  la  que  sus  miembros pertenecen. El  análisis  de  clusters  es  un  método  que  permite  descubrir  asociaciones  y estructuras en los datos que no son evidentes a priori pero que pueden  ser útiles  una  vez  que  se  han  encontrado.  Los  resultados  de  un  Análisis  de Clusters   pueden   contribuir   a   la   definición   formal   de   un   esquema   de clasificación, tal como una taxonomía para un conjunto de objetos,  sugerir modelos   estadísticos   para   describir   poblaciones o  asignar   nuevos individuos a las clases para diagnóstico e identificación, por ejemplo.
+
+
+
+```{r , include=T, results='hide', echo=FALSE, fig.width=10, fig.height=10}
+# hagamos un wrangling a los datos:
+# covid19 <- read_csv2("C:/Users/usuario/Documents/GitHub/Analisis_covid19_con_R/SIR_19_mayo_graficas/covid19.csv")
+
+a1 <- covid19 %>%
+  select(r0, comuna) %>%
+  drop_na() %>% # must drop NAs for clustering to work
+  glimpse()
+
+a2 <- a1 %>%
+  spread(comuna,  r0)  %>%
+  glimpse()
+
+a3 <- t(a2[-1])
+
+a4 <- dist(a3, method="euclidean")  
+
+fit <- hclust(a4, method="ward.D")  
+
+par(cex=0.5,font=1)
+colors = c("red", "blue", "green", "black", "violet", "darkgreen")
+clus4 = cutree(fit, 6)
+
+par(mar=c(7, 3, 1, 1))
+    
+plot(as.phylo(fit), type = "fan",  main="", tip.color = colors[clus4], label.offset = 20, cex = 1)
+
+```
+
+### Despliegue del dendrograma de Comunas, $R_0$ y porcentaje de pobreza comunal.
+
+```{r, echo=FALSE, fig.width=10, fig.height=10}
+
+dd <- dist(covid19_sin_title_com, method = "euclidean")
+hc <- hclust(dd, method = "ward.D2")
+# Default plot
+plot(hc, hang = -1, cex = 0.3, labels = covid19_sin_title_com$com)
+```
+
+### Zoom al dendrograma anterior.
+</br>
+```{r, echo=FALSE, fig.width=10, fig.height=10}
+# zoom al dendrograma:
+hcd <- as.dendrogram(hc, labels = covid19_sin_title_com$com)
+hcd  %>% set("labels", covid19_sin_title_com$com) -> hcd
+hcd  %>% set("labels_cex", 0.5) -> hcd
+plot(hcd, xlim = c(10, 90), ylim = c(10,100), horiz = TRUE)
+```
+
+### Despliegue del dendrograma circular de Comunas, $R_0$ y porcentaje de pobreza comunal.
+
+```{r, echo=FALSE, fig.width=10, fig.height=10}
+
+par(cex=0.5,font=1)
+colors = c("red", "blue",  "violet", "darkgreen")
+clus4 = cutree(hcd, 4)
+
+plot(as.phylo(hcd), type = "fan",  main="", tip.color = colors[clus4], label.offset = 20, cex = 1)
+
+
+
+```
+
+### Correlacion de Pearson entre $R_0$ y pobreza:
+
+```{r, echo=FALSE}
+
+
+ggscatter(covid19, x = "r0", y = "Pobreza", 
+          add = "reg.line", conf.int = TRUE, 
+          cor.coef = TRUE, cor.method = "pearson",
+          xlab = "r0", ylab = "Pobreza")
+
+res <- cor.test(covid19$r0, covid19$Pobreza, 
+                    method = "pearson")
+res
+
+```
+</br>
+
+#### Normalización
+
+##### La normalización implica ajustar los valores medidos en diferentes escalas respecto a una  común, a menudo previo a un proceso de realizar promedios. En R se pueden escalar las variables de una base de datos por medio de la función scale:
+
+covid19.normalizado<- scale(covid19[,c(2,3)],center=T,scale=T)
+
+
+### Datos normalizados.
+
+```{r, echo=FALSE}
+
+covid19.normalizado<- scale(covid19[,c(2,3)],center=T,scale=T)
+kable(head(covid19.normalizado,10),format = "markdown")
+
+
+```
+
+
+
+
+
+
+
+
+
+
+
