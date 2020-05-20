@@ -40,24 +40,25 @@ library(fpc)
 
 covid19_sin_title_com <-
   read_xlsx(
-    "C:/Users/usuario/Documents/GitHub/Analisis_covid19_con_R/SIR_19_mayo_graficas/covid19_sin_title_com.xlsx"
+    "C:/Users/usuario/Documents/GitHub/Analisis_covid19_con_R/analisis_19_mayo_SIR/covid19ccc.xlsx"
   )
+
+covid19 <-
+  read_xlsx(
+    "C:/Users/usuario/Documents/GitHub/Analisis_covid19_con_R/analisis_19_mayo_SIR/covid19cc.xlsx"
+  )
+
 ```
-
-
 
 ### Datos originales.
 
 Se muestran los primeros 10 registros del set de datos sobre el cual se trabaja.
 
 ```{r, echo=FALSE}
-covid19 <-
-  read_xlsx(
-    "C:/Users/usuario/Documents/GitHub/Analisis_covid19_con_R/SIR_19_mayo_graficas/covid19cccc.xlsx"
-  )
 
-covid19$r0 = as.numeric(covid19$r0)
-kable(head(covid19,10),format = "markdown")
+
+covid19_sin_title_com$r0 = as.numeric(covid19_sin_title_com$r0)
+#kable(head(covid19,10),format = "markdown")
 ```
 
 ### Despliegue del dendrograma de Comunas y $R_0$
@@ -71,7 +72,7 @@ El  Análisis  de  Clusters  (o  Análisis  de  conglomerados)  es  una  técnic
 # hagamos un wrangling a los datos:
 # covid19 <- read_csv2("C:/Users/usuario/Documents/GitHub/Analisis_covid19_con_R/SIR_19_mayo_graficas/covid19.csv")
 
-a1 <- covid19 %>%
+a1 <- covid19_sin_title_com %>%
   select(r0, comuna) %>%
   drop_na() %>% # must drop NAs for clustering to work
   glimpse()
@@ -103,17 +104,17 @@ plot(as.phylo(fit), type = "fan",  main="", tip.color = colors[clus4], label.off
 dd <- dist(covid19_sin_title_com, method = "euclidean")
 hc <- hclust(dd, method = "ward.D2")
 # Default plot
-plot(hc, hang = -1, cex = 0.3, labels = covid19_sin_title_com$com)
+plot(hc, hang = -1, cex = 0.3, labels = covid19_sin_title_com$comuna)
 ```
 
 ### Zoom al dendrograma anterior.
 </br>
 ```{r, echo=FALSE, fig.width=10, fig.height=10}
 # zoom al dendrograma:
-hcd <- as.dendrogram(hc, labels = covid19_sin_title_com$com)
-hcd  %>% set("labels", covid19_sin_title_com$com) -> hcd
-hcd  %>% set("labels_cex", 0.5) -> hcd
-plot(hcd, xlim = c(10, 90), ylim = c(10,100), horiz = TRUE)
+hcd <- as.dendrogram(hc, labels = covid19_sin_title_com$comuna)
+hcd  %>% set("labels", covid19_sin_title_com$comuna) -> hcd
+hcd  %>% set("labels_cex", 0.3) -> hcd
+plot(hcd, xlim = c(1,2000000), ylim = c(1,80), horiz = TRUE)
 ```
 
 ### Despliegue del dendrograma circular de Comunas, $R_0$ y porcentaje de pobreza comunal.
@@ -135,12 +136,12 @@ plot(as.phylo(hcd), type = "fan",  main="", tip.color = colors[clus4], label.off
 ```{r, echo=FALSE}
 
 
-ggscatter(covid19, x = "r0", y = "Pobreza", 
+ggscatter(covid19_sin_title_com, x = "r0", y = "Pobreza", 
           add = "reg.line", conf.int = TRUE, 
           cor.coef = TRUE, cor.method = "pearson",
           xlab = "r0", ylab = "Pobreza")
 
-res <- cor.test(covid19$r0, covid19$Pobreza, 
+res <- cor.test(covid19_sin_title_com$r0, covid19_sin_title_com$Pobreza, 
                     method = "pearson")
 res
 
@@ -158,8 +159,8 @@ covid19.normalizado<- scale(covid19[,c(2,3)],center=T,scale=T)
 
 ```{r, echo=FALSE}
 
-covid19.normalizado<- scale(covid19[,c(2,3)],center=T,scale=T)
-kable(head(covid19.normalizado,10),format = "markdown")
+covid19_sin_title_com.normalizado<- scale(covid19_sin_title_com[,c(5,6)],center=T,scale=T)
+kable(head(covid19_sin_title_com.normalizado,10),format = "markdown")
 
 
 ```

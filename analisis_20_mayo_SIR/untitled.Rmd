@@ -1,0 +1,93 @@
+---
+title: "Untitled"
+author: "Christian Castro"
+date: "20-05-2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE,
+                      message = FALSE,
+                      warning = FALSE
+)
+```
+
+
+```{r}
+
+library(janitor)
+library(dplyr)
+library(readxl)
+covid19 <-
+  read_xlsx(
+    "C:/Users/usuario/Documents/GitHub/Analisis_covid19_con_R/analisis_20_mayo_SIR/covid19cc.xlsx"
+  )
+covid19cod_comun <-
+  read_xlsx(
+    "C:/Users/usuario/Documents/GitHub/Analisis_covid19_con_R/analisis_20_mayo_SIR/covid19ccc.xlsx")
+    
+    
+seq <- c(1:280)
+vec <- 0
+for (i in seq)
+{
+  # Se selecciona un subset:
+  comuna_en_cuestion = covid19[covid19$Codigo_comuna == covid19cod_comun$codigo[i], ]
+  
+  comuna_en_cuestion$Fecha <-
+    excel_numeric_to_date(comuna_en_cuestion$Fecha)
+  tabla.comuna = data.frame(comuna_en_cuestion)
+  #  j = length(tabla.comuna)+1
+  
+ # pop_santiago <- 191468
+  
+  pop_santiago <- covid19cod_comun$poblacion[i]
+  
+  # Calculamos los infectados, los recuperados y los susceptibles por dias:
+  infectados.por.dia = aggregate(tabla.comuna$Casos_Diarios ~ tabla.comuna$Fecha, FUN =
+                                   sum)
+  recuperados.por.dia = aggregate(tabla.comuna$Recuperados_Diarios ~
+                                    tabla.comuna$Fecha, FUN = sum)
+  tabla.santiago = data.frame(comuna_en_cuestion$Fecha,
+                              infectados.por.dia,
+                              recuperados.por.dia)
+  tabla.santiago <-
+    tabla.santiago %>% mutate(suma_rec_inf = cumsum(
+      tabla.comuna.Casos_Diarios + tabla.comuna.Recuperados_Diarios
+    ))
+  tabla.santiago <-
+    tabla.santiago %>% mutate(
+      susceptibles = pop_santiago - cumsum(
+        tabla.comuna.Casos_Diarios + tabla.comuna.Recuperados_Diarios
+      )
+    )
+  x = tabla.santiago$tabla.comuna.Recuperados_Diarios
+  y = pop_santiago * log(tabla.santiago$susceptibles)
+  # # summary(lm(y~x))
+  # #
+  estimacion.R0 = -summary(lm(y ~ x))$coefficients[2]
+  
+  cod <- covid19cod_comun$codigo[i]
+  com <- covid19cod_comun$comuna[i]
+  
+  # estimacion.R0
+  
+  #i = i + 1
+  
+  # print(estimacion.R0)
+  # print(covid19$Comuna[i])
+  
+  # cat("El Número Básico de Reproducción para la comuna de",
+  #     com,
+  #     "es",
+  #     estimacion.R0,
+  #     "\n")
+  
+  cat(com,estimacion.R0,"\n")    
+
+}
+
+
+```
+
+
