@@ -1,0 +1,134 @@
+---
+title: "Despliegue de gráficos de $R_0$ por comuna en Chile"
+author: "Christian Castro"
+date: "20-05-2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE,
+                      message = FALSE,
+                      warning = FALSE
+)
+```
+</br>
+</br>
+En un artículo anterior dedujimos la fórmula matemática del Número Básico de Reproducción ($R_0$) y $e^{\frac {R_0R(t)}{ N }}$, éste último casi 1 para las poblaciones a excepción que sean extremadamente pequeñas. En éste RPubs calculamos el $R_0$ para todas las comunas de Chile entre el 28-03-2020 y el 20-05-2020 y lo graficamos. Recordemos que $R_0$ es la medida de una pendiente. Un $R_0 = 1$ implica que la pandemia está estable, un $R_0 < 1$ que disminuye y un $R_0 > 1$ que se expande. Mientras mayor sea el valor de  $R_0$ en valor absoluto, más acelerada será la tasa de aumento o disminución del Covid19 en la respectiva comuna.
+</br>
+</br>
+</br>
+</br>
+```{r, echo=FALSE}
+library(janitor)
+library(dplyr)
+library(readxl)
+# la siguiente linea impide el despliegue de advertencias en forma local:
+options(warn = -1)
+
+library(tidyverse)
+library(gghighlight)
+library(magrittr)
+library(readxl)
+library(readr)
+library(ape)
+library(ggdendro)
+
+#covid19 <- read_csv2("C:/Users/usuario/Documents/GitHub/Analisis_covid19_con_R/analisis_11_mayo/covid19.csv")
+covid19 <-
+  read_xlsx(
+    "C:/Users/usuario/Documents/GitHub/Analisis_covid19_con_R/analisis_20_mayo_SIR/data_20_mayo.xlsx"
+  )
+covid19cod_comun <-
+  read_xlsx(
+    "C:/Users/usuario/Documents/GitHub/Analisis_covid19_con_R/analisis_20_mayo_SIR/data_20_mayo_sec.xlsx")
+
+covid19$Fecha <- excel_numeric_to_date(covid19$Fecha)  
+    
+```
+
+
+
+```{r, echo=FALSE, fig.width=10, fig.height=10 , include=T, results='hide'}
+
+library(janitor)
+library(dplyr)
+library(readxl)
+
+seq <- c(1:294)
+
+for (i in seq)
+{
+  # Se selecciona un subset:
+  comuna_en_cuestion = covid19[covid19$Codigo_comuna == covid19cod_comun$Codigo_comuna[i], ]
+  
+#  comuna_en_cuestion$Fecha <- excel_numeric_to_date(comuna_en_cuestion$Fecha)
+  tabla.comuna = data.frame(comuna_en_cuestion)
+  #  j = length(tabla.comuna)+1
+  
+ # pop_santiago <- 191468
+  
+  pop_santiago <- covid19cod_comun$poblacion[i]
+  
+  # Calculamos los infechatados, los recuperados y los susceptibles por dias:
+  inFechatados.por.dia = aggregate(tabla.comuna$Casos_Diarios ~ tabla.comuna$Fecha, FUN =
+                                   sum)
+  recuperados.por.dia = aggregate(tabla.comuna$Recuperados_Diarios ~
+                                    tabla.comuna$Fecha, FUN = sum)
+  tabla.santiago = data.frame(comuna_en_cuestion$Fecha,
+                              inFechatados.por.dia,
+                              recuperados.por.dia)
+  tabla.santiago <-
+    tabla.santiago %>% mutate(suma_rec_inf = cumsum(
+      tabla.comuna.Casos_Diarios + tabla.comuna.Recuperados_Diarios
+    ))
+  tabla.santiago <-
+    tabla.santiago %>% mutate(
+      susceptibles = pop_santiago - cumsum(
+        tabla.comuna.Casos_Diarios + tabla.comuna.Recuperados_Diarios
+      )
+    )
+  x = tabla.santiago$tabla.comuna.Recuperados_Diarios
+  y = pop_santiago * log(tabla.santiago$susceptibles)
+
+  estimacion.R0 = -summary(lm(y ~ x))$coefficients[2]
+  
+  cod <- covid19cod_comun$Codigo_comuna[i]
+  com <- covid19cod_comun$Comuna[i]
+  
+  # print(estimacion.R0)
+  # print(covid19$Comuna[i])
+  
+   cat("El Número Básico de Reproducción para la comuna de",
+       com,
+       "es",
+       estimacion.R0,
+       "\n")
+
+  # cat(com,estimacion.R0,"\n")
+
+  ## Setup up coordinate system (with x == y aspect ratio):
+   plot(
+     c(-3, 3),
+     c(-10, 10),
+     type = "n",
+     xlab = "x",
+     ylab = "y",
+     asp = 1
+   )
+   ## the x- and y-axis, and an integer grid
+   abline(h = 0, v = 0, col = "gray60")
+   text(1, 0, "( R0 = 0 )", col = "gray60", adj = c(0,-.1))
+   abline(
+     h = -1:5,
+     v = -2:3,
+     col = "lightgray",
+     lty = 3
+   )
+   abline(a = 0, b = estimacion.R0, col = 2)
+   text(1, 3, "R0", col = 2, adj = c(-.1,-.1))
+}
+
+
+```
+
+
