@@ -1,6 +1,6 @@
 ---
-title: "Despliegue de gráficos de $R_0$ por comuna en Chile"
-author: "Christian Castro"
+title: "Despliegue de gráficos de $R_0$ por comuna en Chile, actualizado desde el inicio de la pandemia de Covid19 hasta el 20 de Mayo del 2020."
+author: "DataIntelligence"
 date: "20-05-2020"
 output: html_document
 ---
@@ -48,7 +48,7 @@ covid19$Fecha <- excel_numeric_to_date(covid19$Fecha)
 
 
 
-```{r, echo=FALSE, fig.width=10, fig.height=10 , include=T, results='hide'}
+```{r, echo=FALSE, include=T}
 
 library(janitor)
 library(dplyr)

@@ -55,7 +55,6 @@ ggplot(covid19, aes(Fecha, muertes_cienmil, color=Comuna))+
 
 ### Dendrograma circular de las Muertes por Covid19 en las Comunas de Chile, agrupadas en 4 clusters.
 
-#### Observación técnica: El grupo de comunas del cluster con un nivel mayor de muertes no se corresponde exactamente con la gráfica anterior pues el análisis de conglomerados realiza un "análisis en conjunto de los datos".
 
 ```{r, echo=FALSE, include=T, results='hide'}
 # Despliegue del primer dendograma, pero primero hagamos un wrangling a los datos:
@@ -80,28 +79,17 @@ clus4 = cutree(fit, 4)
 plot(as.phylo(fit), type = "fan",  main="", tip.color = colors[clus4], label.offset = 20, cex = 1)
 
 ```
-```{r, echo=FALSE, fig.width=10, fig.height=10 }
-### Comunas que en algun momento superaron las 10 muertes:
 
-# ```{r}
-# ggplot(covid19, aes(Fecha, Muertes, color=Comuna))+
-#     geom_line(stat="identity")  +
-#     ylab("Casos_Activos") +
-#     gghighlight(max(Muertes) > 1000,
-#         max_highlight = 1,
-#         use_direct_label = TRUE) +
-#         theme_minimal() +
-#         theme(legend.position = 'none')
-# 
-# ```
-```
 
-### Medias condicionales suavizadas (smoothed conditional means) utilizando el metodo LOESS:
+### Medias condicionales suavizadas (smoothed conditional means) utilizando el método LOESS:
 #### La regresión local o regresión polinómica local, también conocida como regresión móvil, es una generalización de la media móvil y la regresión polinómica. Sus métodos más comunes, desarrollados inicialmente para el suavizado de diagrama de dispersión, son LOESS (suavizado de diagrama de dispersión estimado localmente) y LOWESS (suavizado de diagrama de dispersión ponderado localmente)
+
+</br>
 
 #### Grupo 1: Altísimo riesgo.
 
-```{r , include=T, results='hide'}
+
+```{r ,  echo=FALSE, fig.width=10, fig.height=10 , include=T, results='hide'}
 
 clustered_data <- cutree(fit, k=4)
 clustered_data_tidy <- as.data.frame(as.table(clustered_data)) %>% glimpse()
@@ -110,19 +98,22 @@ clustered_data_tidy$Comuna <- as.character(clustered_data_tidy$Comuna)
 joined_clusters <- covid19 %>%inner_join(clustered_data_tidy, by = "Comuna") %>%glimpse()
 table(clustered_data_tidy$cluster)
 
-
-cluster6 <- joined_clusters %>% filter(cluster == "1") 
-ggplot(cluster6, aes(Fecha, muertes_cienmil)) +
+cluster2 <- joined_clusters %>% filter(cluster == "4") 
+ggplot(cluster2, aes(Fecha, muertes_cienmil)) +
   geom_line(color="black") +
   theme_minimal() +
   ylab("Muertes") + xlab("Fecha") +
   geom_smooth(method="auto",color="red", se=F, size=1) +
-  facet_wrap(~Comuna)+ ggtitle("")
+  facet_wrap(~Comuna)+ ggtitle("")+ theme_grey(base_size = 8)
 ```
+
+
+
+
 
 #### Grupo 2: Alto riesgo.
 
-```{r , include=T, results='hide'}
+```{r ,  echo=FALSE, fig.width=10, fig.height=10 , include=T, results='hide'}
 
 clustered_data <- cutree(fit, k=4)
 clustered_data_tidy <- as.data.frame(as.table(clustered_data)) %>% glimpse()
@@ -138,12 +129,12 @@ ggplot(cluster3, aes(Fecha, muertes_cienmil)) +
   theme_minimal() +
   ylab("Muertes") + xlab("Fecha") +
   geom_smooth(method="auto",color="red", se=F, size=1) +
-  facet_wrap(~Comuna)+ ggtitle("")
+  facet_wrap(~Comuna)+ ggtitle("")+ theme_grey(base_size = 8)
 ```
 
-#### Grupo 3: Riesgo medio alto.
+#### Grupo 3: Bajo riesgo.
 
-```{r , include=T, results='hide'}
+```{r ,  echo=FALSE, fig.width=10, fig.height=10 , include=T, results='hide'}
 
 clustered_data <- cutree(fit, k=4)
 clustered_data_tidy <- as.data.frame(as.table(clustered_data)) %>% glimpse()
@@ -159,12 +150,16 @@ ggplot(cluster5, aes(Fecha, muertes_cienmil)) +
   theme_minimal() +
   ylab("Muertes") + xlab("Fecha") +
   geom_smooth(method="auto",color="red", se=F, size=1) +
-  facet_wrap(~Comuna)+ ggtitle("")
+  facet_wrap(~Comuna)+ ggtitle("")+ theme_grey(base_size = 8)
 ```
 
-#### Grupo 4: Riesgo medio bajo.
 
-```{r , include=T, results='hide'}
+
+
+#### Grupo 4: Riesgo bajísimo.
+
+
+```{r ,  echo=FALSE, fig.width=10, fig.height=10 , include=T, results='hide'}
 
 clustered_data <- cutree(fit, k=4)
 clustered_data_tidy <- as.data.frame(as.table(clustered_data)) %>% glimpse()
@@ -173,135 +168,17 @@ clustered_data_tidy$Comuna <- as.character(clustered_data_tidy$Comuna)
 joined_clusters <- covid19 %>%inner_join(clustered_data_tidy, by = "Comuna") %>%glimpse()
 table(clustered_data_tidy$cluster)
 
-cluster2 <- joined_clusters %>% filter(cluster == "4") 
-ggplot(cluster2, aes(Fecha, muertes_cienmil)) +
+
+cluster6 <- joined_clusters %>% filter(cluster == "1") 
+ggplot(cluster6, aes(Fecha, muertes_cienmil)) +
   geom_line(color="black") +
   theme_minimal() +
   ylab("Muertes") + xlab("Fecha") +
   geom_smooth(method="auto",color="red", se=F, size=1) +
-  facet_wrap(~Comuna)+ ggtitle("")
+  facet_wrap(~Comuna)+ ggtitle("")+ theme_grey(base_size = 8)
 ```
 
 
 
 
-
-### El análisis anterior presenta un sesgo poblacional. Así, Punta Arenas y Santiago se agrupan dentro de las comunas de altísimo riesgo, pero la comuna de Santiago tiene 4 veces la población de Punta Arenas. Corregimos:
-
-
-
-
-
-<!-- ### Dendrograma circular de los CASOS ACTIVOS de Covid19 en las comunas de Chile, agrupados en 4 clusters,  del 3 de Marzo al 10 de Mayo del 2020 -->
-
-<!-- ```{r , include=T, results='hide'} -->
-<!-- # Despliegue del primer dendograma, pero primero hagamos un wrangling a los datos: -->
-
-<!-- Casos_Activos <- covid19 %>% -->
-<!--   select(Casos_Activos, Fecha, Comuna) %>% -->
-<!--   drop_na() %>% # must drop NAs for clustering to work -->
-<!--   glimpse() -->
-
-<!-- spread_homs_per_100k <- Casos_Activos %>% -->
-<!--   spread(Comuna,  Casos_Activos)  %>% -->
-<!--   glimpse() -->
-
-<!-- murders <- t(spread_homs_per_100k[-1]) -->
-<!-- Casos_Activos <- dist(murders, method="euclidean")   -->
-<!-- fit <- hclust(Casos_Activos, method="ward.D")   -->
-
-<!-- par(cex=0.5,font=1) -->
-<!-- colors = c("red", "blue", "green", "black", "violet", "darkgreen") -->
-<!-- clus4 = cutree(fit, 6) -->
-<!-- plot(as.phylo(fit), type = "fan",  main="", tip.color = colors[clus4], label.offset = 350, cex = 0.6) -->
-
-<!-- ``` -->
-
-
-
-
-
-
-```{r}
-
-library(janitor)
-library(dplyr)
-library(readxl)
-
-seq <- c(1:294)
-
-for (i in seq)
-{
-  # Se selecciona un subset:
-  comuna_en_cuestion = covid19[covid19$Codigo_comuna == covid19cod_comun$Codigo_comuna[i], ]
-  
-#  comuna_en_cuestion$Fecha <- excel_numeric_to_date(comuna_en_cuestion$Fecha)
-  tabla.comuna = data.frame(comuna_en_cuestion)
-  #  j = length(tabla.comuna)+1
-  
- # pop_santiago <- 191468
-  
-  pop_santiago <- covid19cod_comun$poblacion[i]
-  
-  # Calculamos los infechatados, los recuperados y los susceptibles por dias:
-  inFechatados.por.dia = aggregate(tabla.comuna$Casos_Diarios ~ tabla.comuna$Fecha, FUN =
-                                   sum)
-  recuperados.por.dia = aggregate(tabla.comuna$Recuperados_Diarios ~
-                                    tabla.comuna$Fecha, FUN = sum)
-  tabla.santiago = data.frame(comuna_en_cuestion$Fecha,
-                              inFechatados.por.dia,
-                              recuperados.por.dia)
-  tabla.santiago <-
-    tabla.santiago %>% mutate(suma_rec_inf = cumsum(
-      tabla.comuna.Casos_Diarios + tabla.comuna.Recuperados_Diarios
-    ))
-  tabla.santiago <-
-    tabla.santiago %>% mutate(
-      susceptibles = pop_santiago - cumsum(
-        tabla.comuna.Casos_Diarios + tabla.comuna.Recuperados_Diarios
-      )
-    )
-  x = tabla.santiago$tabla.comuna.Recuperados_Diarios
-  y = pop_santiago * log(tabla.santiago$susceptibles)
-
-  estimacion.R0 = -summary(lm(y ~ x))$coefficients[2]
-  
-  cod <- covid19cod_comun$Codigo_comuna[i]
-  com <- covid19cod_comun$Comuna[i]
-  
-  # print(estimacion.R0)
-  # print(covid19$Comuna[i])
-  
-  # cat("El Número Básico de Reproducción para la comuna de",
-  #     com,
-  #     "es",
-  #     estimacion.R0,
-  #     "\n")
-  
-  # cat(com,estimacion.R0,"\n")  
-  
-  ## Setup up coordinate system (with x == y aspect ratio):
-  # plot(
-  #   c(-3, 3),
-  #   c(-10, 10),
-  #   type = "n",
-  #   xlab = "x",
-  #   ylab = "y",
-  #   asp = 1
-  # )
-  # ## the x- and y-axis, and an integer grid
-  # abline(h = 0, v = 0, col = "gray60")
-  # text(1, 0, "( R0 = 0 )", col = "gray60", adj = c(0,-.1))
-  # abline(
-  #   h = -1:5,
-  #   v = -2:3,
-  #   col = "lightgray",
-  #   lty = 3
-  # )
-  # abline(a = 0, b = estimacion.R0, col = 2)
-  # text(1, 3, "R0", col = 2, adj = c(-.1,-.1))
-}
-
-
-```
 
