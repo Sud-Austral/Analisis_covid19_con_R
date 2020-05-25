@@ -1,0 +1,738 @@
+---
+title: "Análisis geoespacial con R, de la epidemia Covid19 en Chile por Región a nivel comunal."
+subtitle: "Casos Activos por 100.000 habitantes."
+author: "DataIntelligence"
+date: "21-05-2020"
+output: html_document
+---
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+	echo = TRUE,
+	message = FALSE,
+	warning = FALSE
+	
+# Fuente:
+# https://arcruz0.github.io/libroadp/mapas.html	
+	
+)
+```
+```{r cuerpo, echo=FALSE}
+library(rnaturalearth)
+library(ggplot2)
+library(reticulate)
+library(knitr)
+library(tidyverse)
+library(gghighlight)
+library(magrittr)
+library(readxl)
+library(readr)
+library(ape)
+library(ggdendro)
+library(bookdown)
+library(janitor)
+require(rgdal)
+require(ggplot2)
+library(sf)
+library(ggrepel)
+# Cargamos la base de datos de los shapes:
+shp_comunas_chile = st_read("C:/Users/usuario/Documents/GitHub/Analisis_covid19_con_R/analisis_21_mayo_SIR_GEO/shapes_de_chile/comunas.shp") 
+
+# Leemos la base de datos de DataIntelligence y arreglamos el formato de la fecha:
+covid19 <- read_xlsx("C:/Users/usuario/Documents/GitHub/Analisis_covid19_con_R/analisis_21_mayo_SIR_GEO/data_20_mayo.xlsx")
+covid19$Fecha <- excel_numeric_to_date(covid19$Fecha)
+
+################################################################################################
+
+```
+
+
+```{r cuerpoa, echo=FALSE}
+################################################################################
+################## Región de Arica y Parinacota ################################
+################################################################################
+
+# Cargamos la base de datos de los shapes:
+shp_comunas_ayp = shp_comunas_chile %>% filter(Region == "Región de Arica y Parinacota")
+
+# Borrar una vez que se escriba:
+# st_write(shp_comunas_ayp,"shp_comunas_ayp.shp")
+
+shp_comunas_ayp=st_read("C:/Users/usuario/Documents/GitHub/Analisis_covid19_con_R/analisis_21_mayo_SIR_GEO/shp_comunas_ayp.shp")
+
+shp_comunas_ayp <- shp_comunas_ayp %>% mutate(centroid = map(geometry, st_centroid), coords = map(centroid, 
+    st_coordinates), coords_x = map_dbl(coords, 1), coords_y = map_dbl(coords, 
+    2))
+
+# Graficamos el shape:
+# ggplot(shp_comunas_ayp) + geom_sf(aes(fill = Comuna)) +  guides(fill = "none")
+
+# Extraemos los registros que contengan en el campo Region la palabra Región de Arica y Parinacota:
+covid19_ayp = covid19[covid19$Region=="Arica_y_Parinacota",]
+
+colnames(covid19_ayp)[3] <- "cod_comuna"
+
+data_ayp<-left_join(covid19_ayp,shp_comunas_ayp,by="cod_comuna")
+# head(data_ayp,100)
+
+data_ayp<-st_as_sf(data_ayp)
+
+library(gganimate)
+a <- ggplot(data_ayp)+
+  geom_sf(aes(fill=Casos_Activos_por_100000_Hb))+
+  scale_fill_gradient(low = "#56B1F7", high = "#132B43")+
+  transition_manual(Fecha)+
+    geom_text_repel(mapping = aes(coords_x, coords_y, label = Comuna.x), size = 3, min.segment.length = 0) +
+  labs(subtitle = "Fecha de la pandemia en la Región de Arica y Parinacota: {current_frame}")
+#animate(a)
+animate(a, fps = 3, width = 750, height = 450)
+anim_save("data_ayp.gif")
+```
+
+```{r cuerpob, echo=FALSE}
+################################################################################
+################## Región de Tarapacá ##########################################
+################################################################################
+
+# Cargamos la base de datos de los shapes:
+shp_comunas_tar = shp_comunas_chile %>% filter(Region == "Región de Tarapacá")
+
+# Borrar una vez que se escriba:
+# st_write(shp_comunas_ayp,"shp_comunas_ayp.shp")
+
+shp_comunas_tar=st_read("C:/Users/usuario/Documents/GitHub/Analisis_covid19_con_R/analisis_21_mayo_SIR_GEO/shp_comunas_tar.shp")
+
+shp_comunas_tar <- shp_comunas_tar %>% mutate(centroid = map(geometry, st_centroid), coords = map(centroid, 
+    st_coordinates), coords_x = map_dbl(coords, 1), coords_y = map_dbl(coords, 
+    2))
+
+
+covid19_tar = covid19[covid19$Region=="Tarapaca",]
+
+colnames(covid19_tar)[3] <- "cod_comuna"
+
+data_tar<-left_join(covid19_tar,shp_comunas_tar,by="cod_comuna")
+# head(data_ayp,100)
+
+data_tar<-st_as_sf(data_tar)
+
+library(gganimate)
+b <- ggplot(data_tar)+
+  geom_sf(aes(fill=Casos_Activos_por_100000_Hb))+
+  scale_fill_gradient(low = "#56B1F7", high = "#132B43")+
+  transition_manual(Fecha)+
+      geom_text_repel(mapping = aes(coords_x, coords_y, label = Comuna.x), size = 3, min.segment.length = 0) +
+  labs(subtitle = "Fecha de la pandemia en la Región de Tarapacá: {current_frame}")
+#animate(a)
+animate(b, fps = 3, width = 750, height = 450)
+anim_save("data_tar.gif")
+```
+
+
+```{r cuerpoc, echo=FALSE}
+################################################################################
+################################################################################
+
+# Cargamos la base de datos de los shapes:
+shp_comunas_ant = shp_comunas_chile %>% filter(Region == "Región de Antofagasta")
+
+# Borrar una vez que se escriba:
+# st_write(shp_comunas_ant,"shp_comunas_ant.shp")
+
+shp_comunas_ant=st_read("C:/Users/usuario/Documents/GitHub/Analisis_covid19_con_R/analisis_21_mayo_SIR_GEO/shp_comunas_ant.shp")
+shp_comunas_ant <- shp_comunas_ant %>% mutate(centroid = map(geometry, st_centroid), coords = map(centroid, 
+    st_coordinates), coords_x = map_dbl(coords, 1), coords_y = map_dbl(coords, 
+    2))
+# Graficamos el shape:
+# ggplot(shp_comunas_ant) + geom_sf(aes(fill = Comuna)) +  guides(fill = "none")
+
+# Extraemos los registros que contengan en el campo Region la palabra Región de Tarapacá:
+covid19_ant = covid19[covid19$Region=="Antofagasta",]
+
+colnames(covid19_ant)[3] <- "cod_comuna"
+
+data_ant<-left_join(covid19_ant,shp_comunas_ant,by="cod_comuna")
+# head(data_ant,100)
+
+data_ant<-st_as_sf(data_ant)
+
+library(gganimate)
+c <- ggplot(data_ant)+
+  geom_sf(aes(fill=Casos_Activos_por_100000_Hb))+
+  scale_fill_gradient(low = "#56B1F7", high = "#132B43")+
+  transition_manual(Fecha)+
+      geom_text_repel(mapping = aes(coords_x, coords_y, label = Comuna.x), size = 3, min.segment.length = 0) +
+  labs(subtitle = "Fecha de la pandemia en la Región de Antofagasta: {current_frame}")
+# animate(c)
+animate(c, fps = 3, width = 750, height = 450)
+anim_save("data_ant.gif")
+# shp_comunas_tar <- shp_comunas_tar %>% mutate(centroid = map(geometry, st_centroid), coords = map(centroid, 
+#     st_coordinates), coords_x = map_dbl(coords, 1), coords_y = map_dbl(coords, 
+#     2))
+# 
+# head(shp_comunas_tar)
+# library(ggrepel)
+# ggplot(data = shp_comunas_tar) +
+#   geom_sf()+
+#   geom_text_repel(mapping = aes(coords_x, coords_y, label = Comuna), size = 3, min.segment.length = 0)
+
+################################################################################
+################################################################################
+
+
+```
+
+
+
+
+
+
+
+```{r cuerpod, echo=FALSE}
+
+
+
+
+################################################################################
+################################################################################
+
+
+# Cargamos la base de datos de los shapes:
+shp_comunas_ata = shp_comunas_chile %>% filter(Region == "Región de Atacama")
+
+# Borrar una vez que se escriba:
+# st_write(shp_comunas_ata,"shp_comunas_ata.shp")
+
+shp_comunas_ata=st_read("C:/Users/usuario/Documents/GitHub/Analisis_covid19_con_R/analisis_21_mayo_SIR_GEO/shp_comunas_ata.shp")
+shp_comunas_ata <- shp_comunas_ata %>% mutate(centroid = map(geometry, st_centroid), coords = map(centroid, 
+    st_coordinates), coords_x = map_dbl(coords, 1), coords_y = map_dbl(coords, 
+    2))
+# Graficamos el shape:
+# ggplot(shp_comunas_ata) + geom_sf(aes(fill = Comuna)) +  guides(fill = "none")
+
+# Extraemos los registros que contengan en el campo Region la palabra Región de Tarapacá:
+covid19_ata = covid19[covid19$Region=="Atacama",]
+
+colnames(covid19_ata)[3] <- "cod_comuna"
+
+data_ata<-left_join(covid19_ata,shp_comunas_ata,by="cod_comuna")
+# head(data_ata,100)
+
+data_ata<-st_as_sf(data_ata)
+
+library(gganimate)
+d <- ggplot(data_ata)+
+  geom_sf(aes(fill=Casos_Activos_por_100000_Hb))+
+  scale_fill_gradient(low = "#56B1F7", high = "#132B43")+
+  transition_manual(Fecha)+
+      geom_text_repel(mapping = aes(coords_x, coords_y, label = Comuna.x), size = 3, min.segment.length = 0) +
+  labs(subtitle = "Fecha de la pandemia en la Región de Atacama: {current_frame}")
+#animate(d)
+animate(d, fps = 3, width = 750, height = 450)
+anim_save("data_ata.gif")
+```
+
+
+
+
+```{r cuerpoe, echo=FALSE}
+
+################################################################################
+################################################################################
+
+
+# Cargamos la base de datos de los shapes:
+shp_comunas_coq = shp_comunas_chile %>% filter(Region == "Región de Coquimbo")
+
+# Borrar una vez que se escriba:
+# st_write(shp_comunas_coq,"shp_comunas_coq.shp")
+
+shp_comunas_coq=st_read("C:/Users/usuario/Documents/GitHub/Analisis_covid19_con_R/analisis_21_mayo_SIR_GEO/shp_comunas_coq.shp")
+shp_comunas_coq <- shp_comunas_coq %>% mutate(centroid = map(geometry, st_centroid), coords = map(centroid, 
+    st_coordinates), coords_x = map_dbl(coords, 1), coords_y = map_dbl(coords, 
+    2))
+# Graficamos el shape:
+# ggplot(shp_comunas_coq) + geom_sf(aes(fill = Comuna)) +  guides(fill = "none")
+
+# Extraemos los registros que contengan en el campo Region la palabra Región de Tarapacá:
+covid19_coq = covid19[covid19$Region=="Coquimbo",]
+
+colnames(covid19_coq)[3] <- "cod_comuna"
+
+data_coq<-left_join(covid19_coq,shp_comunas_coq,by="cod_comuna")
+# head(data_coq,100)
+
+data_coq<-st_as_sf(data_coq)
+
+library(gganimate)
+e <- ggplot(data_coq)+
+  geom_sf(aes(fill=Casos_Activos_por_100000_Hb))+
+  scale_fill_gradient(low = "#56B1F7", high = "#132B43")+
+  transition_manual(Fecha)+
+      geom_text_repel(mapping = aes(coords_x, coords_y, label = Comuna.x), size = 3, min.segment.length = 0) +
+  labs(subtitle = "Fecha de la pandemia en la Región de Coquimbo: {current_frame}")
+#animate(e)
+animate(e, fps = 3, width = 750, height = 450)
+anim_save("data_coq.gif")
+```
+
+```{r cuerpof, echo=FALSE}
+################################################################################
+################################################################################
+
+
+# Cargamos la base de datos de los shapes:
+shp_comunas_val = shp_comunas_chile %>% filter(Region == "Región de Valparaíso")
+
+# Borrar una vez que se escriba:
+# st_write(shp_comunas_val,"shp_comunas_val.shp")
+
+shp_comunas_val=st_read("C:/Users/usuario/Documents/GitHub/Analisis_covid19_con_R/analisis_21_mayo_SIR_GEO/shp_comunas_val.shp")
+
+shp_comunas_val <-  shp_comunas_val %>% filter(Comuna != "Isla de Pascua")
+shp_comunas_val <- shp_comunas_val %>% mutate(centroid = map(geometry, st_centroid), coords = map(centroid, 
+    st_coordinates), coords_x = map_dbl(coords, 1), coords_y = map_dbl(coords, 
+    2))
+# Graficamos el shape:
+# ggplot(shp_comunas_val) + geom_sf(aes(fill = Comuna)) +  guides(fill = "none")
+
+# Extraemos los registros que contengan en el campo Region la palabra Región de Tarapacá:
+covid19_val = covid19[covid19$Region=="Valparaiso",]
+
+colnames(covid19_val)[3] <- "cod_comuna"
+
+data_val<-left_join(covid19_val,shp_comunas_val,by="cod_comuna")
+# head(data_val,100)
+
+data_val<-st_as_sf(data_val)
+
+library(gganimate)
+f <- ggplot(data_val)+
+  geom_sf(aes(fill=Casos_Activos_por_100000_Hb))+
+  scale_fill_gradient(low = "#56B1F7", high = "#132B43")+
+  transition_manual(Fecha)+
+      geom_text_repel(mapping = aes(coords_x, coords_y, label = Comuna.x), size = 3, min.segment.length = 0) +
+  labs(subtitle = "Fecha de la pandemia en la Región de Valparaíso: {current_frame}")
+#animate(f)
+animate(f, fps = 3, width = 750, height = 450)
+anim_save("data_val.gif")
+```
+```{r cuerpog, echo=FALSE}
+
+# Cargamos la base de datos de los shapes:
+shp_comunas_met = shp_comunas_chile %>% filter(Region == "Región Metropolitana de Santiago")
+
+# Borrar una vez que se escriba:
+# st_write(shp_comunas_met,"shp_comunas_met.shp")
+
+shp_comunas_met=st_read("C:/Users/usuario/Documents/GitHub/Analisis_covid19_con_R/analisis_21_mayo_SIR_GEO/shp_comunas_met.shp")
+shp_comunas_met <- shp_comunas_met %>% mutate(centroid = map(geometry, st_centroid), coords = map(centroid, 
+    st_coordinates), coords_x = map_dbl(coords, 1), coords_y = map_dbl(coords, 
+    2))
+# Graficamos el shape:
+# ggplot(shp_comunas_met) + geom_sf(aes(fill = Comuna)) +  guides(fill = "none")
+
+# Extraemos los registros que contengan en el campo Region la palabra Región de Arica y Parinacota:
+covid19_met = covid19[covid19$Region=="Metropolitana",]
+
+colnames(covid19_met)[3] <- "cod_comuna"
+
+data_met<-left_join(covid19_met,shp_comunas_met,by="cod_comuna")
+# head(data_met,100)
+
+data_met<-st_as_sf(data_met)
+
+library(gganimate)
+g <- ggplot(data_met)+
+  geom_sf(aes(fill=Casos_Activos_por_100000_Hb))+
+  scale_fill_gradient(low = "#56B1F7", high = "#132B43")+
+  transition_manual(Fecha)+
+      geom_text_repel(mapping = aes(coords_x, coords_y, label = Comuna.x), size = 3, min.segment.length = 0) +
+  labs(subtitle = "Fecha de la pandemia en la Región Metropolitana: {current_frame}")
+#animate(g)
+
+animate(g, fps = 3, width = 750, height = 450)
+anim_save("data_met.gif")
+```
+
+```{r cuerpoh, echo=FALSE}
+
+# Cargamos la base de datos de los shapes:
+shp_comunas_lbo = shp_comunas_chile %>% filter(Region == "Región del Libertador Bernardo O'Higgins")
+
+# Borrar una vez que se escriba:
+# st_write(shp_comunas_lbo,"shp_comunas_lbo.shp")
+
+shp_comunas_lbo=st_read("C:/Users/usuario/Documents/GitHub/Analisis_covid19_con_R/analisis_21_mayo_SIR_GEO/shp_comunas_lbo.shp")
+shp_comunas_lbo <- shp_comunas_lbo %>% mutate(centroid = map(geometry, st_centroid), coords = map(centroid, 
+    st_coordinates), coords_x = map_dbl(coords, 1), coords_y = map_dbl(coords, 
+    2))
+# Graficamos el shape:
+# ggplot(shp_comunas_lbo) + geom_sf(aes(fill = Comuna)) +  guides(fill = "none")
+
+# Extraemos los registros que contengan en el campo Region la palabra Región de Arica y Parinacota:
+covid19_lbo = covid19[covid19$Region=="O'Higgins",]
+
+colnames(covid19_lbo)[3] <- "cod_comuna"
+
+data_lbo<-left_join(covid19_lbo,shp_comunas_lbo,by="cod_comuna")
+# head(data_lbo,100)
+
+data_lbo<-st_as_sf(data_lbo)
+
+library(gganimate)
+h <- ggplot(data_lbo)+
+  geom_sf(aes(fill=Casos_Activos_por_100000_Hb))+
+  scale_fill_gradient(low = "#56B1F7", high = "#132B43")+
+  transition_manual(Fecha)+
+      geom_text_repel(mapping = aes(coords_x, coords_y, label = Comuna.x), size = 3, min.segment.length = 0) +
+  labs(subtitle = "Fecha de la pandemia en la Región del Libertador Bernardo O'Higgins: {current_frame}")
+#animate(h)
+
+animate(h, fps = 3, width = 750, height = 450)
+anim_save("data_lbo.gif")
+```
+
+
+```{r cuerpoi, echo=FALSE}
+
+# Cargamos la base de datos de los shapes:
+shp_comunas_mau = shp_comunas_chile %>% filter(Region == "Región del Maule")
+
+# Borrar una vez que se escriba:
+# st_write(shp_comunas_mau,"shp_comunas_mau.shp")
+
+shp_comunas_mau=st_read("C:/Users/usuario/Documents/GitHub/Analisis_covid19_con_R/analisis_21_mayo_SIR_GEO/shp_comunas_mau.shp")
+shp_comunas_mau <- shp_comunas_mau %>% mutate(centroid = map(geometry, st_centroid), coords = map(centroid, 
+    st_coordinates), coords_x = map_dbl(coords, 1), coords_y = map_dbl(coords, 
+    2))
+# Graficamos el shape:
+# ggplot(shp_comunas_lbo) + geom_sf(aes(fill = Comuna)) +  guides(fill = "none")
+
+# Extraemos los registros que contengan en el campo Region la palabra Región de Arica y Parinacota:
+covid19_mau = covid19[covid19$Region=="Maule",]
+
+colnames(covid19_mau)[3] <- "cod_comuna"
+
+data_mau<-left_join(covid19_mau,shp_comunas_mau,by="cod_comuna")
+# head(data_mau,100)
+
+data_mau<-st_as_sf(data_mau)
+
+library(gganimate)
+i <- ggplot(data_mau)+
+  geom_sf(aes(fill=Casos_Activos_por_100000_Hb))+
+  scale_fill_gradient(low = "#56B1F7", high = "#132B43")+
+  transition_manual(Fecha)+
+      geom_text_repel(mapping = aes(coords_x, coords_y, label = Comuna.x), size = 3, min.segment.length = 0) +
+  labs(subtitle = "Fecha de la pandemia en la Región del Maule: {current_frame}")
+#animate(i)
+animate(i, fps = 3, width = 750, height = 450)
+anim_save("data_mau.gif")
+```
+
+```{r cuerpoj, echo=FALSE}
+
+# Cargamos la base de datos de los shapes:
+shp_comunas_nub = shp_comunas_chile %>% filter(Region == "Región de Ñuble")
+
+# Borrar una vez que se escriba:
+# st_write(shp_comunas_nub,"shp_comunas_nub.shp")
+
+shp_comunas_nub=st_read("C:/Users/usuario/Documents/GitHub/Analisis_covid19_con_R/analisis_21_mayo_SIR_GEO/shp_comunas_nub.shp")
+shp_comunas_nub <- shp_comunas_nub %>% mutate(centroid = map(geometry, st_centroid), coords = map(centroid, 
+    st_coordinates), coords_x = map_dbl(coords, 1), coords_y = map_dbl(coords, 
+    2))
+# Graficamos el shape:
+# ggplot(shp_comunas_lbo) + geom_sf(aes(fill = Comuna)) +  guides(fill = "none")
+
+# Extraemos los registros que contengan en el campo Region la palabra Región de Arica y Parinacota:
+covid19_nub = covid19[covid19$Region=="Nuble",]
+
+colnames(covid19_nub)[3] <- "cod_comuna"
+
+data_nub<-left_join(covid19_nub,shp_comunas_nub,by="cod_comuna")
+# head(data_nub,100)
+
+data_nub<-st_as_sf(data_nub)
+
+library(gganimate)
+j <- ggplot(data_nub)+
+  geom_sf(aes(fill=Casos_Activos_por_100000_Hb))+
+  scale_fill_gradient(low = "#56B1F7", high = "#132B43")+
+  transition_manual(Fecha)+
+      geom_text_repel(mapping = aes(coords_x, coords_y, label = Comuna.x), size = 3, min.segment.length = 0) +
+  labs(subtitle = "Fecha de la pandemia en la Región de Ñuble: {current_frame}")
+#animate(j)
+animate(j, fps = 3, width = 750, height = 450)
+anim_save("data_nub.gif")
+```
+
+```{r cuerpok, echo=FALSE}
+
+# Cargamos la base de datos de los shapes:
+shp_comunas_bio = shp_comunas_chile %>% filter(Region == "Región del Bío-Bío")
+
+# Borrar una vez que se escriba:
+# st_write(shp_comunas_bio,"shp_comunas_bio.shp")
+
+shp_comunas_bio=st_read("C:/Users/usuario/Documents/GitHub/Analisis_covid19_con_R/analisis_21_mayo_SIR_GEO/shp_comunas_bio.shp")
+shp_comunas_bio <- shp_comunas_bio %>% mutate(centroid = map(geometry, st_centroid), coords = map(centroid, 
+    st_coordinates), coords_x = map_dbl(coords, 1), coords_y = map_dbl(coords, 
+    2))
+# Graficamos el shape:
+# ggplot(shp_comunas_lbo) + geom_sf(aes(fill = Comuna)) +  guides(fill = "none")
+
+# Extraemos los registros que contengan en el campo Region la palabra Región de Arica y Parinacota:
+covid19_bio = covid19[covid19$Region=="Biobio",]
+
+colnames(covid19_bio)[3] <- "cod_comuna"
+
+data_bio<-left_join(covid19_bio,shp_comunas_bio,by="cod_comuna")
+# head(data_nub,100)
+
+data_bio<-st_as_sf(data_bio)
+
+library(gganimate)
+k <- ggplot(data_bio)+
+  geom_sf(aes(fill=Casos_Activos_por_100000_Hb))+
+  scale_fill_gradient(low = "#56B1F7", high = "#132B43")+
+  transition_manual(Fecha)+
+      geom_text_repel(mapping = aes(coords_x, coords_y, label = Comuna.x), size = 3, min.segment.length = 0) +
+  labs(subtitle = "Fecha de la pandemia en la Región del Bío-Bío: {current_frame}")
+#animate(k)
+
+animate(k, fps = 3, width = 750, height = 450)
+anim_save("data_bio.gif")
+```
+
+
+
+```{r cuerpol, echo=FALSE}
+################################################################################
+################################################################################
+################################################################################
+# la araucania
+
+# Cargamos la base de datos de los shapes:
+shp_comunas_ara = shp_comunas_chile %>% filter(Region == "Región de La Araucanía")
+
+# Borrar una vez que se escriba:
+# st_write(shp_comunas_ara,"shp_comunas_ara.shp")
+
+shp_comunas_ara=st_read("C:/Users/usuario/Documents/GitHub/Analisis_covid19_con_R/analisis_21_mayo_SIR_GEO/shp_comunas_ara.shp")
+shp_comunas_ara <- shp_comunas_ara %>% mutate(centroid = map(geometry, st_centroid), coords = map(centroid, 
+    st_coordinates), coords_x = map_dbl(coords, 1), coords_y = map_dbl(coords, 
+    2))
+# Graficamos el shape:
+# ggplot(shp_comunas_lbo) + geom_sf(aes(fill = Comuna)) +  guides(fill = "none")
+
+# Extraemos los registros que contengan en el campo Region la palabra Región de Arica y Parinacota:
+covid19_ara = covid19[covid19$Region=="La_Araucania",]
+
+colnames(covid19_ara)[3] <- "cod_comuna"
+
+data_ara<-left_join(covid19_ara,shp_comunas_ara,by="cod_comuna")
+# head(data_nub,100)
+
+data_ara<-st_as_sf(data_ara)
+
+library(gganimate)
+l <- ggplot(data_ara)+
+  geom_sf(aes(fill=Casos_Activos_por_100000_Hb))+
+  scale_fill_gradient(low = "#56B1F7", high = "#132B43")+
+  transition_manual(Fecha)+
+      geom_text_repel(mapping = aes(coords_x, coords_y, label = Comuna.x), size = 3, min.segment.length = 0) +
+  labs(subtitle = "Fecha de la pandemia en la Región de La Araucanía: {current_frame}")
+#animate(k)
+
+animate(l, fps = 3, width = 750, height = 450)
+anim_save("data_ara.gif")
+
+```
+
+
+
+
+```{r cuerpom, echo=FALSE}
+# los rios
+
+# Cargamos la base de datos de los shapes:
+shp_comunas_lri = shp_comunas_chile %>% filter(Region == "Región de Los Ríos")
+
+# Borrar una vez que se escriba:
+# st_write(shp_comunas_lri,"shp_comunas_lri.shp")
+
+shp_comunas_lri=st_read("C:/Users/usuario/Documents/GitHub/Analisis_covid19_con_R/analisis_21_mayo_SIR_GEO/shp_comunas_lri.shp")
+shp_comunas_lri <- shp_comunas_lri %>% mutate(centroid = map(geometry, st_centroid), coords = map(centroid, 
+    st_coordinates), coords_x = map_dbl(coords, 1), coords_y = map_dbl(coords, 
+    2))
+# Graficamos el shape:
+# ggplot(shp_comunas_lbo) + geom_sf(aes(fill = Comuna)) +  guides(fill = "none")
+
+# Extraemos los registros que contengan en el campo Region la palabra Región de Arica y Parinacota:
+covid19_lri = covid19[covid19$Region=="Los_Rios",]
+
+colnames(covid19_lri)[3] <- "cod_comuna"
+
+data_lri<-left_join(covid19_lri,shp_comunas_lri,by="cod_comuna")
+# head(data_nub,100)
+
+data_lri<-st_as_sf(data_lri)
+
+library(gganimate)
+m <- ggplot(data_lri)+
+  geom_sf(aes(fill=Casos_Activos_por_100000_Hb))+
+  scale_fill_gradient(low = "#56B1F7", high = "#132B43")+
+  transition_manual(Fecha)+
+      geom_text_repel(mapping = aes(coords_x, coords_y, label = Comuna.x), size = 3, min.segment.length = 0) +
+  labs(subtitle = "Fecha de la pandemia en la Región de Los Ríos: {current_frame}")
+# animate(m)
+
+animate(m, fps = 3, width = 750, height = 450)
+anim_save("data_lri.gif")
+
+
+```
+
+
+
+
+```{r cuerpon, echo=FALSE}
+# los lagos
+
+# Cargamos la base de datos de los shapes:
+shp_comunas_lla = shp_comunas_chile %>% filter(Region == "Región de Los Lagos")
+
+# Borrar una vez que se escriba:
+# st_write(shp_comunas_lla,"shp_comunas_lla.shp")
+
+shp_comunas_lla=st_read("C:/Users/usuario/Documents/GitHub/Analisis_covid19_con_R/analisis_21_mayo_SIR_GEO/shp_comunas_lla.shp")
+shp_comunas_lla <- shp_comunas_lla %>% mutate(centroid = map(geometry, st_centroid), coords = map(centroid, 
+    st_coordinates), coords_x = map_dbl(coords, 1), coords_y = map_dbl(coords, 
+    2))
+# Graficamos el shape:
+# ggplot(shp_comunas_lbo) + geom_sf(aes(fill = Comuna)) +  guides(fill = "none")
+
+# Extraemos los registros que contengan en el campo Region la palabra Región de Arica y Parinacota:
+covid19_lla = covid19[covid19$Region=="Los_Lagos",]
+
+colnames(covid19_lla)[3] <- "cod_comuna"
+
+data_lla<-left_join(covid19_lla,shp_comunas_lla,by="cod_comuna")
+# head(data_nub,100)
+
+data_lla<-st_as_sf(data_lla)
+
+library(gganimate)
+n <- ggplot(data_lla)+
+  geom_sf(aes(fill=Casos_Activos_por_100000_Hb))+
+  scale_fill_gradient(low = "#56B1F7", high = "#132B43")+
+  transition_manual(Fecha)+
+      geom_text_repel(mapping = aes(coords_x, coords_y, label = Comuna.x), size = 3, min.segment.length = 0) +
+  labs(subtitle = "Fecha de la pandemia en la Región de Los Lagos: {current_frame}")
+# animate(n)
+
+animate(n, fps = 3, width = 750, height = 450)
+anim_save("data_lla.gif")
+
+
+```
+
+
+
+
+
+
+```{r cuerpoo, echo=FALSE}
+# aysen
+
+# Cargamos la base de datos de los shapes:
+shp_comunas_ays = shp_comunas_chile %>% filter(Region == "Región de Aysén del Gral.Ibañez del Campo")
+
+# Borrar una vez que se escriba:
+# st_write(shp_comunas_ays,"shp_comunas_ays.shp")
+
+shp_comunas_ays=st_read("C:/Users/usuario/Documents/GitHub/Analisis_covid19_con_R/analisis_21_mayo_SIR_GEO/shp_comunas_ays.shp")
+shp_comunas_ays <- shp_comunas_ays %>% mutate(centroid = map(geometry, st_centroid), coords = map(centroid, 
+    st_coordinates), coords_x = map_dbl(coords, 1), coords_y = map_dbl(coords, 
+    2))
+# Graficamos el shape:
+# ggplot(shp_comunas_lbo) + geom_sf(aes(fill = Comuna)) +  guides(fill = "none")
+
+# Extraemos los registros que contengan en el campo Region la palabra Región de Arica y Parinacota:
+covid19_ays = covid19[covid19$Region=="Aysen",]
+
+colnames(covid19_ays)[3] <- "cod_comuna"
+
+data_ays<-left_join(covid19_ays,shp_comunas_ays,by="cod_comuna")
+# head(data_nub,100)
+
+data_ays<-st_as_sf(data_ays)
+
+library(gganimate)
+o <- ggplot(data_ays)+
+  geom_sf(aes(fill=Casos_Activos_por_100000_Hb))+
+  scale_fill_gradient(low = "#56B1F7", high = "#132B43")+
+  transition_manual(Fecha)+
+      geom_text_repel(mapping = aes(coords_x, coords_y, label = Comuna.x), size = 3, min.segment.length = 0) +
+  labs(subtitle = "Fecha de la pandemia en la Región de Aysén del Gral.Ibañez del Campo: {current_frame}")
+# animate(o)
+
+
+animate(o, fps = 3, width = 750, height = 450)
+anim_save("data_ays.gif")
+
+```
+
+
+
+
+
+```{r cuerpop, echo=FALSE}
+# magallanes
+
+# Cargamos la base de datos de los shapes:
+shp_comunas_mag = shp_comunas_chile %>% filter(Region == "Región de Magallanes y Antártica Chilena")
+
+# Borrar una vez que se escriba:
+# st_write(shp_comunas_mag,"shp_comunas_mag.shp")
+
+shp_comunas_mag=st_read("C:/Users/usuario/Documents/GitHub/Analisis_covid19_con_R/analisis_21_mayo_SIR_GEO/shp_comunas_mag.shp")
+shp_comunas_mag <- shp_comunas_mag %>% mutate(centroid = map(geometry, st_centroid), coords = map(centroid, 
+    st_coordinates), coords_x = map_dbl(coords, 1), coords_y = map_dbl(coords, 
+    2))
+# Graficamos el shape:
+# ggplot(shp_comunas_lbo) + geom_sf(aes(fill = Comuna)) +  guides(fill = "none")
+
+# Extraemos los registros que contengan en el campo Region la palabra Región de Arica y Parinacota:
+covid19_mag = covid19[covid19$Region=="Magallanes",]
+
+colnames(covid19_mag)[3] <- "cod_comuna"
+
+data_mag<-left_join(covid19_mag,shp_comunas_mag,by="cod_comuna")
+# head(data_nub,100)
+
+data_mag<-st_as_sf(data_mag)
+
+library(gganimate)
+p <- ggplot(data_mag)+
+  geom_sf(aes(fill=Casos_Activos_por_100000_Hb))+
+  scale_fill_gradient(low = "#56B1F7", high = "#132B43")+
+  transition_manual(Fecha)+
+      geom_text_repel(mapping = aes(coords_x, coords_y, label = Comuna.x), size = 3, min.segment.length = 0) +
+  labs(subtitle = "Fecha de la pandemia en la Región de Magallanes y Antártica Chilena: {current_frame}")
+# animate(p)
+
+animate(p, fps = 3, width = 750, height = 450)
+anim_save("data_mag.gif")
+
+
+
+```
+
+
+
+
+
+
+

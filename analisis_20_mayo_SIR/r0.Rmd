@@ -10,10 +10,22 @@ knitr::opts_chunk$set(echo = TRUE,
                       message = FALSE,
                       warning = FALSE
 )
+
+#Volume 25, Number 1—January 2019
+#Perspective
+#Complexity of the Basic Reproduction Number (R0) 
+#https://wwwnc.cdc.gov/eid/article/25/1/17-1901_article
+
+#“When will it be over?”: An introduction to viral reproduction numbers, R0 and Re 
+#April 14, 2020
+#https://www.cebm.net/covid-19/when-will-it-be-over-an-introduction-to-viral-reproduction-numbers-r0-and-re/
+
 ```
 </br>
 </br>
-En un artículo anterior dedujimos la fórmula matemática del Número Básico de Reproducción ($R_0$) y $e^{\frac {R_0R(t)}{ N }}$, éste último casi 1 para las poblaciones a excepción que sean extremadamente pequeñas. En éste RPubs calculamos el $R_0$ para todas las comunas de Chile entre el 28-03-2020 y el 20-05-2020 y lo graficamos. Recordemos que $R_0$ es la medida de una pendiente. Un $R_0 = 1$ implica que la pandemia está estable, un $R_0 < 1$ que disminuye y un $R_0 > 1$ que se expande. Mientras mayor sea el valor de  $R_0$ en valor absoluto, más acelerada será la tasa de aumento o disminución del Covid19 en la respectiva comuna.
+En un artículo anterior dedujimos la fórmula matemática del Número Básico de Reproducción ($R_0$) y $e^{\frac {R_0R(t)}{ N }}$, éste último casi 1 para las poblaciones a excepción que sean extremadamente pequeñas. En éste RPubs calculamos el $R_0$ para todas las comunas de Chile entre el 28-03-2020 y el 20-05-2020 y lo graficamos. Recordemos que $R_0$ es la medida de una pendiente. Un $R_0 = 1$ implica que la pandemia está estable, un $R_0 < 1$ que disminuye y un $R_0 > 1$ que se expande. Mientras mayor o menor sea el valor de $R_0$ de 1, más acelerada será la tasa de aumento o disminución del Covid19 en la respectiva comuna. $R_0$, es la cifra que define el número de casos secundarios generados por un caso primario. Para que se produzca una epidemia, el valor $R_0$ debe ser mayor que 1. Y al revés, cuando se sitúa por debajo de 1, más controlada se considera la propagación de una infección.
+
+Así, hay enfermedades muy contagiosas, como el sarampión, cuyo $R_0$ se estima en torno a 15. Para la gripe común, el valor se sitúa en 1,3. Es decir, cada infectado contagia en promedio a algo más de una persona. Según las primeras investigaciones que se realizaron sobre el coronavirus, su $R_0$ se encuentra en 2,5, de modo que una persona infectada, tenga síntomas o no, contagia en promedio a entre 2 y 3 personas.
 </br>
 </br>
 </br>
@@ -32,7 +44,7 @@ library(readxl)
 library(readr)
 library(ape)
 library(ggdendro)
-
+library(rmarkdown)
 #covid19 <- read_csv2("C:/Users/usuario/Documents/GitHub/Analisis_covid19_con_R/analisis_11_mayo/covid19.csv")
 covid19 <-
   read_xlsx(

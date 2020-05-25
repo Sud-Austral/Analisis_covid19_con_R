@@ -1,0 +1,58 @@
+unnamed-chunk-2	cars	View
+unnamed-chunk-3	cars	str
+unnamed-chunk-4	cars	dim	ncol	nrow
+unnamed-chunk-5	?	cars
+unnamed-chunk-6	~	cars	plot
+underfit_plot	~	abline	cars	lm	plot
+overfit_plot	~	cars	data.frame	lines	lm	plot	predict	seq
+goodfit_plot	~	abline	cars	lm	plot
+unnamed-chunk-7	$	cars
+unnamed-chunk-8	^	c	mean	sum	x	y
+unnamed-chunk-9	c	mean	Sxx	Sxy	x	y
+unnamed-chunk-10	$	cars	unique
+unnamed-chunk-11	beta_0_hat	beta_1_hat
+unnamed-chunk-12	$	cars	unique
+unnamed-chunk-13	$	&	<	cars	max	min
+unnamed-chunk-14	beta_0_hat	beta_1_hat
+unnamed-chunk-15	$	&	<	cars	range
+unnamed-chunk-16	beta_0_hat	beta_1_hat
+unnamed-chunk-17	$	==	cars	which
+unnamed-chunk-18	beta_0_hat	beta_1_hat
+unnamed-chunk-19	^	beta_0_hat	beta_1_hat	length	sum	x	y
+unnamed-chunk-20	s2_e	sqrt
+unnamed-chunk-21	^	c	mean	sum	y	y_hat
+unnamed-chunk-22	n	SSE
+unnamed-chunk-23	==	n	s2_e	SSE
+unnamed-chunk-24	SSReg	SST
+unnamed-chunk-25	$	~	abline	arrows	data.frame	fitted	lm	mean	plot	rep	rnorm	seq
+unnamed-chunk-26	generate_data	set.seed
+unnamed-chunk-27	c	par	plot_data	plot_exp_dev	plot_total_dev	plot_total_dev_prop	plot_unexp_dev
+unnamed-chunk-28	generate_data	set.seed
+unnamed-chunk-29	c	par	plot_data	plot_exp_dev	plot_total_dev	plot_total_dev_prop	plot_unexp_dev
+unnamed-chunk-30	~	cars	lm
+unnamed-chunk-31	stop_dist_model
+unnamed-chunk-32	beta_0_hat	beta_1_hat	c
+unnamed-chunk-33	~	abline	cars	plot	stop_dist_model
+unnamed-chunk-34	names	stop_dist_model
+unnamed-chunk-35	$	stop_dist_model
+unnamed-chunk-36	coef	fitted	resid	stop_dist_model
+unnamed-chunk-37	stop_dist_model	summary
+unnamed-chunk-38	names	stop_dist_model	summary
+unnamed-chunk-39	$	stop_dist_model	summary
+unnamed-chunk-40	$	stop_dist_model	summary
+unnamed-chunk-41	data.frame	predict	stop_dist_model
+unnamed-chunk-42	c	data.frame	predict	stop_dist_model
+unnamed-chunk-43	cars	predict	stop_dist_model
+unnamed-chunk-44	predict	stop_dist_model
+unnamed-chunk-45	fitted	stop_dist_model
+unnamed-chunk-46	
+unnamed-chunk-47	num_obs	rnorm	set.seed	sigma
+unnamed-chunk-48	num_obs	seq
+unnamed-chunk-49	beta_0	beta_1	epsilon	x_vals
+unnamed-chunk-50	~	coef	lm
+unnamed-chunk-51	~	abline	plot	sim_fit
+unnamed-chunk-52	data.frame	length	rnorm
+unnamed-chunk-53	set.seed	sim_slr	x_vals
+unnamed-chunk-54	head	sim_data
+unnamed-chunk-55	~	coef	lm	sim_data
+unnamed-chunk-56	~	abline	beta_0	beta_1	c	legend	plot	sim_data	sim_fit

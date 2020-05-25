@@ -1,0 +1,104 @@
+---
+title: "Untitled"
+author: "Christian Castro"
+date: "21-05-2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+```{r}
+# https://stackoverflow.com/questions/54855334/gganimate-time-series-and-two-line-plot
+
+# https://medium.com/european-data-journalism-network/animating-one-degree-warmer-time-series-with-ggplot2-and-gganimate-7460862fcd7e
+
+df <- tibble::tribble(
+  ~Date, ~active, ~non_active,
+      1,                 848,             335,
+      2,                 998,             280,
+      3,                1096,             308,
+      4,                1127,             274,
+      5,                1022,             313,
+      6,                 973,             351,
+      7,                1131,             302,
+      8,                1165,             312,
+      9,                1159,             293,
+     10,                1192,             311,
+     11,                1221,             332,
+     12,                1075,             369,
+     13,                1056,             416,
+     14,                1219,             356,
+     15,                1240,             363,
+     16,                1270,             376,
+     17,                1302,             325,
+     18,                1292,             346,
+     19,                1104,             374,
+     20,                1084,             413,
+     21,                1257,             350,
+     22,                1306,             356,
+     23,                1318,             368,
+     24,                1380,             378,
+     25,                1350,             388,
+     26,                1163,             421,
+     27,                1158,             468,
+     28,                1368,             410,
+     29,                1429,             423,
+     30,                1514,             456,
+     31,                1564,             434
+  )
+
+
+library(gganimate)
+library(dplyr)
+library(tibbletime)
+library(gifski)
+library(ggplot2)
+library(png)
+
+
+df2 <- data.frame(Date=rep(df$Date, 2), 
+                  act_noact=c(df$active, df$non_active), 
+                  grp=rep(c("Active","Non active"), each=nrow(df)))
+
+
+p <- ggplot(df2, aes(x=Date, y=act_noact, group=grp)) +
+  geom_line() +
+  geom_segment(aes(xend=max(Date), yend = act_noact), linetype=2, colour='blue') +
+  geom_point(size = 3) + 
+  geom_text(aes(x = max(Date)+.1, label = sprintf("%5.0f", act_noact)), hjust=0) +
+  transition_reveal(Date) + 
+  view_follow(fixed_y = TRUE)+
+  coord_cartesian(clip = 'off') + 
+  labs(title = 'Active in Jan', y = 'Individual Active') +
+  enter_drift(x_mod = -1) + exit_drift(x_mod = 1) +
+  theme_bw() +
+  theme(panel.border = element_blank(),
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
+        axis.line = element_line(colour = "black"),
+        plot.margin = margin(5.5, 40, 5.5, 5.5))
+
+    animate(p, fps=10)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+```
+

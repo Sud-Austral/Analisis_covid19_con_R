@@ -1,0 +1,91 @@
+---
+title: "Gráficos de barras y líneas Covid19 para la comuna de Santiago"
+author: "DataIntelligence"
+date: "23-05-2020"
+output: html_document
+---
+
+Los casos acumulados (línea roja) y las muertes están corregidas por cada 100.000 habitantes.
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(rnaturalearth)
+library(ggplot2)
+library(reticulate)
+library(knitr)
+library(tidyverse)
+library(gghighlight)
+library(magrittr)
+library(readxl)
+library(readr)
+library(ape)
+library(ggdendro)
+library(bookdown)
+library(janitor)
+require(rgdal)
+require(ggplot2)
+library(sf)
+library(ggrepel)
+library(gganimate)
+library(ggplot2)
+library(gridExtra)
+library(reshape2)
+
+```
+
+## Barras y lineas
+
+```{r, echo=FALSE}
+# Leemos la base de datos de DataIntelligence y arreglamos el formato de la fecha:
+covid19 <- read_xlsx("C:/Users/usuario/Documents/GitHub/Analisis_covid19_con_R/analisis_23_mayo/data_20_mayo.xlsx")
+covid19$Fecha <- excel_numeric_to_date(covid19$Fecha)
+
+str(covid19)
+
+```
+
+```{r, echo=FALSE}
+covid19_met = covid19[covid19$Comuna=="Santiago",]
+
+#covid19_met
+
+# ggplot(covid19_met, aes(Fecha, Casos_Acumulados)) + geom_line(linetype="longdash") + geom_point() + ggtitle("El_Monte")
+# 
+# ggplot(covid19_met,aes(Fecha, Casos_Acumulados, fill = Casos_Acumulados)) + geom_bar(stat = "identity") + ggtitle("El_Monte")
+# 
+# barplot(covid19_met$Casos_Acumulados,
+# names.arg = covid19_met$Fecha,
+# col = "darkred")
+
+#Taking the Dataset mentioned in the question
+df = data.frame(a=covid19_met$Fecha,b=covid19_met$Casos_Activos,c=covid19_met$Recuperados ,d=covid19_met$muertes_cienmil, e=covid19_met$casos_acum_cienmil)
+#df
+# #Create a Matrix which will help in creating the plot
+ value_matrix = matrix(nrow = 3, ncol = 68)
+# #An empty matrix is a necessary requirement prior to copying data
+ value_matrix[1,] = df$b
+ value_matrix[2,] = df$c
+  value_matrix[3,] = df$d
+
+#
+# #Note that the "beside" argument has to be kept "TRUE" in order to place the bars side by side
+
+ #  plot(df$a, df$b/20)
+
+
+
+ barplot(value_matrix, names.arg = df$a, beside = TRUE, col = c("blue", "green","white"), legend.text = c("Casos Activos", "Recuperados", "Fallecidos"),args.legend = list(x = "topleft"))
+
+
+
+
+ # barplot(value_matrix, names.arg = df$a, beside = TRUE, col = c("blue", "red"),border="blue", legend.text = c("Casos acumulados por cien mil", "Muertes por cien mil"))
+
+par(new=TRUE)
+
+  plot(df$a, df$e-45, xaxt="n", yaxt="n", type = "l", pch = 10,
+     col = "red", ylim = range(value_matrix))
+
+```
+
+

@@ -1,0 +1,113 @@
+---
+title: "$R_0$ a lo largo del tiempo en las comunas de Chile"
+subtitle: "del 23-03-2020 al 20-05-2020"
+author: "DataIntelligence"
+date: "22-05-2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE,
+                      message = FALSE,
+                      warning = FALSE
+)
+```
+
+```{r, echo=FALSE, include=T, results='hide'}
+library(janitor)
+library(dplyr)
+library(readxl)
+# la siguiente linea impide el despliegue de advertencias en forma local:
+options(warn = -1)
+
+library(tidyverse)
+library(gghighlight)
+library(magrittr)
+library(readxl)
+library(readr)
+library(ape)
+library(ggdendro)
+library(rmarkdown)
+library(openxlsx)
+library(ggplot2)
+library(gganimate)
+theme_set(theme_bw())
+
+covid19cod_comun <-
+  read_xlsx(
+    "C:/Users/usuario/Documents/GitHub/Analisis_covid19_con_R/analisis_22_mayo/data_20_mayo_sec.xlsx"
+  )
+covid19 <-
+  read_xlsx(
+    "C:/Users/usuario/Documents/GitHub/Analisis_covid19_con_R/analisis_22_mayo/data_20_mayo.xlsx"
+  )
+#covid19$Fecha <- excel_numeric_to_date(covid19$Fecha)  
+
+```
+```{r, echo=FALSE, include=T}
+
+library(janitor)
+library(dplyr)
+library(readxl)
+
+seq <- c(1:294)
+#seq <- c(1:1)
+a <- c()
+for (i in seq)
+{
+  # Se selecciona un subset:
+  comuna_en_cuestion1 = covid19[covid19$Codigo_comuna == covid19cod_comun$Codigo_comuna[i], ]
+  
+  longitud = nrow(comuna_en_cuestion1)
+  
+  for (j in 2:longitud)
+  {
+    
+    comuna_en_cuestion2 = comuna_en_cuestion1[1:j,]
+    
+    tabla.comuna = data.frame(comuna_en_cuestion2)
+    
+    pop_santiago <- covid19cod_comun$poblacion[i]
+    
+    # Calculamos los infechatados, los recuperados y los susceptibles por dias:
+    inFechatados.por.dia = aggregate(tabla.comuna$Casos_Diarios ~ tabla.comuna$Fecha, FUN =
+                                       sum)
+    recuperados.por.dia = aggregate(tabla.comuna$Recuperados_Diarios ~
+                                      tabla.comuna$Fecha, FUN = sum)
+    tabla.santiago = data.frame(comuna_en_cuestion2$Fecha,
+                                inFechatados.por.dia,
+                                recuperados.por.dia)
+    tabla.santiago <-
+      tabla.santiago %>% mutate(suma_rec_inf = cumsum(
+        tabla.comuna.Casos_Diarios + tabla.comuna.Recuperados_Diarios
+      ))
+    tabla.santiago <-
+      tabla.santiago %>% mutate(
+        susceptibles = pop_santiago - cumsum(
+          tabla.comuna.Casos_Diarios + tabla.comuna.Recuperados_Diarios
+        )
+      )
+    x = tabla.santiago$tabla.comuna.Recuperados_Diarios
+    y = pop_santiago * log(tabla.santiago$susceptibles)
+    
+    estimacion.R0 = -summary(lm(y ~ x))$coefficients[2]
+    a[j] <- estimacion.R0
+    cod <- covid19cod_comun$Codigo_comuna[i]
+    com <- covid19cod_comun$Comuna[i]
+    
+    f <- (comuna_en_cuestion2$Fecha[j])
+    
+    # print(estimacion.R0)
+    # print(covid19$Comuna[i])
+    
+    cat("Fecha",f,"El Número Básico de Reproducción para la comuna de",
+        com,
+        "es",
+        estimacion.R0,
+        "\n")
+    
+    # cat(com,estimacion.R0,"\n")
+  }
+  
+}
+```

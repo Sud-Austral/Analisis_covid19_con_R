@@ -1,0 +1,93 @@
+---
+title: "Aisen"
+author: "Christian Castro"
+date: "24-05-2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+
+```{r cuerpo, echo=FALSE, include=FALSE}
+library(rnaturalearth)
+library(ggplot2)
+library(reticulate)
+library(knitr)
+library(tidyverse)
+library(gghighlight)
+library(magrittr)
+library(readxl)
+library(readr)
+library(ape)
+library(ggdendro)
+library(bookdown)
+library(janitor)
+require(rgdal)
+require(ggplot2)
+library(sf)
+library(ggrepel)
+library(gganimate)
+# Cargamos la base de datos de los shapes:
+shp_comunas_chile = st_read("C:/Users/usuario/Documents/GitHub/Analisis_covid19_con_R/analisis_21_mayo_SIR_GEO/shapes_de_chile/comunas.shp") 
+
+
+#C:\Users\usuario\Documents\GitHub\Datos\datacovidChile\CovidChileV2
+#Casos activos por 100.000 habs.
+
+
+# Leemos la base de datos de DataIntelligence y arreglamos el formato de la fecha:
+covid19 <- read_xlsx("C:/Users/usuario/Documents/GitHub/Analisis_covid19_con_R/analisis_24_mayo/data_20_mayo.xlsx")
+covid19$Fecha <- excel_numeric_to_date(covid19$Fecha)
+
+################################################################################################
+
+```
+
+```{r cuerpog, echo=FALSE, include=FALSE}
+
+# Cargamos la base de datos de los shapes:
+shp_comunas_met = shp_comunas_chile %>% filter(Region == "Región de Aysén del Gral.Ibañez del Campo")
+
+# Borrar una vez que se escriba:
+# st_write(shp_comunas_met,"shp_comunas_met.shp")
+
+shp_comunas_met=st_read("C:/Users/usuario/Documents/GitHub/Analisis_covid19_con_R/analisis_21_mayo_SIR_GEO/shp_comunas_met.shp")
+
+shp_comunas_met <- shp_comunas_met %>% mutate(centroid = map(geometry, st_centroid), coords = map(centroid, 
+    st_coordinates), longitud = map_dbl(coords, 1), latitud = map_dbl(coords, 
+    2))
+
+
+# Graficamos el shape:
+# ggplot(shp_comunas_met) + geom_sf(aes(fill = Comuna)) +  guides(fill = "none")
+
+# Extraemos los registros que contengan en el campo Region la palabra Región de Arica y Parinacota:
+covid19_met = covid19[covid19$Region=="Aysen",]
+
+colnames(covid19_met)[3] <- "cod_comuna"
+
+data_met<-left_join(covid19_met,shp_comunas_met,by="cod_comuna")
+
+head(data_met,100)
+
+data_met<-st_as_sf(data_met)
+```
+```{r cuerpoh, echo=FALSE}
+g <- ggplot(data_met)+
+  geom_sf(aes(fill=Casos_Activos_por_100000_Hb))+
+  scale_fill_gradient(low = "#56B1F7", high = "#132B43")+
+  transition_manual(Fecha)+
+  
+  geom_text_repel(mapping = aes(longitud, latitud, label = Comuna.x), size = 3, min.segment.length = 0) +
+  
+  
+  labs(subtitle = "Fecha de la pandemia en la Región Metropolitana: {current_frame}")
+animate(g)
+
+animate(g, fps = 3, width = 750, height = 450)
+anim_save("data_ays.gif")
+
+```
