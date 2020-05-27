@@ -1,0 +1,12 @@
+name: demo_covid_antofagasta
+title: demo_covid_antofagasta
+username:
+account: chris666
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 2355178
+bundleId: 3188952
+url: https://chris666.shinyapps.io/demo_covid_antofagasta/
+when: 1590446026.31653
+asMultiple: FALSE
+asStatic: FALSE

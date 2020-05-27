@@ -1,0 +1,95 @@
+---
+title: "lineas y barras"
+author: "Christian Castro"
+date: "25-05-2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+	echo = TRUE,
+	message = FALSE,
+	warning = FALSE
+	
+)
+```
+
+## Analisis Covid19 en Chile.
+
+```{r, echo=FALSE}
+
+library(rnaturalearth)
+library(ggplot2)
+library(reticulate)
+library(knitr)
+library(tidyverse)
+library(gghighlight)
+library(magrittr)
+library(readxl)
+library(readr)
+library(ape)
+library(ggdendro)
+library(bookdown)
+library(janitor)
+require(rgdal)
+require(ggplot2)
+library(sf)
+library(ggrepel)
+library(plotly)
+
+# Cargamos la base de datos de los shapes:
+shp_comunas_chile = st_read("C:/Users/usuario/Documents/GitHub/Analisis_covid19_con_R/analisis_21_mayo_SIR_GEO/shapes_de_chile/comunas.shp") 
+
+# Cargamos la base de datos de DataIntelligence
+covid19 <- read_xlsx("C:/Users/usuario/Documents/GitHub/Analisis_covid19_con_R/analisis_25_mayo/analisis 25 de  mayo/data_20_mayo.xlsx")
+
+# Arreglamos el formato de la fecha:
+covid19$Fecha <- excel_numeric_to_date(covid19$Fecha)
+
+# dibujamos la grafica de datos crudos
+# para Arica y parinacota:
+
+# Extraemos los registros que contengan en el campo Region la palabra Región de Arica y Parinacota:
+covid19_ayp = covid19[covid19$Comuna=="Antofagasta",]
+
+lafecha <- covid19_ayp$Fecha
+
+muertes_acum <- covid19_ayp$Muertes_acum
+casos_activos_acum <- covid19_ayp$Casos_Activos_acum
+recuperados_acum <- covid19_ayp$Recuperados_acum
+
+casos_acumulados <- covid19_ayp$Casos_Acum
+
+# se construye un dataframe
+data <- data.frame(lafecha, muertes_acum, casos_activos_acum, recuperados_acum, casos_acumulados)
+
+# se define el grafico padre:
+fig <- plot_ly(data, x = ~lafecha, y = ~muertes_acum, type = 'bar', name = 'Muertes acumuladas',
+        marker = list(color = 'rgb(55, 83, 109)')) 
+
+# # Barras de casos_activos_acum
+ fig <- fig %>% add_trace(y = ~casos_activos_acum, name = 'Casos activos acumulados', marker = list(color = 'rgb(26, 118, 255)'))
+ # Barras de recuperados_acum
+ fig <- fig %>% add_trace(y = ~recuperados_acum, name = 'Casos recuperados acumulados', marker = list(color = 'rgb(26, 118, 255)'))
+
+# se anade una linea:
+fig <- fig %>% add_trace(x = ~lafecha, y = ~casos_acumulados, name = 'Casos acumulados', type = 'scatter', mode = 'lines', line = list(color = 'rgb(205, 12, 24)', width = 2))
+
+fig <- fig %>% layout(title = 'Analisis del Covid19 en Chile',
+         xaxis = list(
+           title = "",
+           tickfont = list(
+             size = 14,
+             color = 'rgb(107, 107, 107)')),
+         yaxis = list(
+           title = 'Casos',
+           titlefont = list(
+             size = 16,
+             color = 'rgb(107, 107, 107)'),
+           tickfont = list(
+             size = 14,
+             color = 'rgb(107, 107, 107)')),
+         legend = list(x = 0, y = 1, bgcolor = 'rgba(255, 255, 255, 0)', bordercolor = 'rgba(255, 255, 255, 0)'),
+         barmode = 'group', bargap = 0.15, bargroupgap = 0.1)
+fig
+```

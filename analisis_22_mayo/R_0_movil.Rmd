@@ -1,8 +1,7 @@
 ---
-title: "$R_0$ a lo largo del tiempo en la comuna de Iquique"
-subtitle: "del 23-03-2020 al 20-05-2020"
-author: "DataIntelligence"
-date: "22-05-2020"
+title: "Untitled"
+author: "Christian Castro"
+date: "25-05-2020"
 output: html_document
 ---
 
@@ -114,7 +113,7 @@ for (i in seq)
 ```
 
 
-```{r, echo=FALSE, include=T,  results='hide'}
+```{r}
 x <-  1:59
 
 eee <- data.frame(x,a)
@@ -126,16 +125,6 @@ p <- ggplot(
   geom_line(colour="#000099") +
   labs(x = "Dia de la infección", y = "R_0") +
   theme(legend.position = "top")
-
-```
-
-```{r, echo=FALSE, include=T,  results='hide'}
 p + geom_point(colour ="#CC6666") + transition_reveal(x)
 p
 ```
-
-
-
-
-
-

@@ -1,0 +1,12 @@
+name: demo_covid
+title: demo_covid
+username:
+account: chris666
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 2355223
+bundleId: 3188993
+url: https://chris666.shinyapps.io/demo_covid/
+when: 1590446741.93359
+asMultiple: FALSE
+asStatic: FALSE

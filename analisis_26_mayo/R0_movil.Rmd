@@ -1,0 +1,186 @@
+---
+title: "r0_movil"
+author: "Christian Castro"
+date: "25-05-2020"
+output: html_document
+
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE,
+                      message = FALSE,
+                      warning = FALSE
+)
+```
+
+```{r uno}
+library(janitor)
+library(dplyr)
+library(readxl)
+# la siguiente linea impide el despliegue de advertencias en forma local:
+options(warn = -1)
+
+library(tidyverse)
+library(gghighlight)
+library(magrittr)
+
+library(readr)
+library(ape)
+library(ggdendro)
+library(rmarkdown)
+
+
+library(ggplot2)
+library(gganimate)
+theme_set(theme_bw())
+
+# covid19cod_comun <-
+#   read_xlsx(
+#     "data_20_mayo_sec.xlsx"
+#   )
+
+covid19 <- read_xlsx("data_20_mayo.xlsx")
+covid19$Fecha <- excel_numeric_to_date(covid19$Fecha)
+
+
+
+# se declara el vector de R0
+ a <- c()
+
+  # Se selecciona un subset con el primer codigo de la comuna:
+  # comuna_en_cuestion = covid19[covid19$Codigo_comuna == covid19cod_comun$Codigo_comuna[1], ]
+  
+# se selecciona la comuna de alto hospicio
+  comuna_en_cuestion = covid19[covid19$Codigo_comuna == 11201, ]
+
+  # se debe obtener el lugar de la primera y la ultima observacion
+  # nrow entrega el numero de filas de un array
+
+  
+ longitud = nrow(comuna_en_cuestion)
+
+  
+      # comuna_en_cuestion = data.frame(comuna_en_cuestion2)
+    comuna_en_cuestion = data.frame(comuna_en_cuestion)
+    comuna_en_cuestion
+  # hay que ir construyendo subset de datos para iquique que vayan del 1 al 1 al 1 al 59 (59 subsets)
+  # for (j in 2:longitud)
+  # {
+    
+
+    # esta matriz no comienza del registro numero 1
+    # ya tenemos el array listo
+    
+    # comuna_en_cuestion2 = comuna_en_cuestion[1:j,]
+    
+    
+
+    #pop_santiago <- covid19cod_comun$poblacion[1]
+    
+    # carguemos sun numero artificial a population
+    population <- 1000
+    
+    
+    
+    # Calculamos los infechatados, los recuperados y los susceptibles por dias:
+    inFechatados.por.dia = aggregate(comuna_en_cuestion$Casos_Diarios ~ comuna_en_cuestion$Fecha, FUN =
+                                       sum)
+    
+    recuperados.por.dia = aggregate(comuna_en_cuestion$Recuperados_Diarios ~
+                                      comuna_en_cuestion$Fecha, FUN = sum)
+    
+    comuna_en_cuestion_mod = data.frame(comuna_en_cuestion$Fecha,
+                                inFechatados.por.dia,
+                                recuperados.por.dia)
+    comuna_en_cuestion_mod <-
+      comuna_en_cuestion_mod %>% mutate(suma_rec_inf = cumsum(
+        comuna_en_cuestion.Casos_Diarios + comuna_en_cuestion.Recuperados_Diarios
+      ))
+    
+    comuna_en_cuestion_mod <-
+      comuna_en_cuestion_mod %>% mutate(
+        susceptibles = population - cumsum(
+          comuna_en_cuestion.Casos_Diarios + comuna_en_cuestion.Recuperados_Diarios
+        )
+      )
+    comuna_en_cuestion_mod
+    
+    
+    
+    
+    
+    
+    
+    
+    x = comuna_en_cuestion_mod$comuna_en_cuestion.Recuperados_Diarios
+    x
+    x[26]
+    y = population * log(comuna_en_cuestion_mod$susceptibles)
+    y
+    
+    
+    # 
+    # 
+    
+  m <- seq(2, longitud)  
+    
+ for(i in m) {
+    #Tenemos los vectores sobre los que ejecutar los calculos:
+   xx<- x[1:i]
+    yy<- y[1:i]
+    estimacion.R0 = -summary(lm(yy ~ xx))$coefficients[2]
+
+    a[i] <- estimacion.R0
+    
+    # cod <- comuna_en_cuestion$Codigo_comuna
+
+    com <- comuna_en_cuestion$Comuna %>% unique()
+    
+    # print(estimacion.R0)
+    # print(covid19$Comuna[i])
+    
+    cat("longitud",longitud,"El R", com, "es", estimacion.R0, "\n")
+    # }   
+    # cat(com,estimacion.R0,"\n")
+   }
+  
+ for(i in 5) {
+    #Tenemos los vectores sobre los que ejecutar los calculos:
+   x<- x[1:i]
+    y<- y[1:i]
+    estimacion.R0 = -summary(lm(y ~ x))$coefficients[2]
+
+    #a[j] <- estimacion.R0
+    
+    # cod <- comuna_en_cuestion$Codigo_comuna
+
+    com <- comuna_en_cuestion$Comuna %>% unique()
+    
+    # print(estimacion.R0)
+    # print(covid19$Comuna[i])
+    
+    cat("longitud",longitud,"El R", com, "es", estimacion.R0, "\n")
+    # }   
+    # cat(com,estimacion.R0,"\n")
+   }
+
+
+x <-  1:longitud
+
+eee <- data.frame(x,a)
+
+p <- ggplot(
+  eee,
+  aes(x, a)
+  ) +
+  geom_line(colour="#000099") +
+  labs(x = "Dia de la infección", y = "R_0") +
+  theme(legend.position = "top")
+
+p + geom_point(colour ="#CC6666") + transition_reveal(x)
+```
+
+
+
+
+
