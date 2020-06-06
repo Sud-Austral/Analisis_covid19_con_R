@@ -1,0 +1,234 @@
+---
+title: "Pruebas de hipótesis para proporciones sobre datos geo-referenciados de El Salvador"
+author: "DataIntelligence"
+date: "04-06-2020"
+output: html_document
+---
+#### Introducción:
+Tenemos un conjunto de 527575 observaciones agrupadas en cuatro categorías:
+
+1. Bosque Bosque
+2. Bosque no Bosque
+3. No Bosque Bosque
+4. No Bosque no Bosque
+
+Deseamos optimizar la información de la población extrayendo una muestra representativa que mantenga las proporciones de las categorías a cierto nivel de significación, digamos, con un 99% de certeza.
+
+Para ello aplicaremos experimentos, que consisten en extraer muestras y aplicarles un estadístico para que al compararlos con con un valor límite de una distribución normal asociado al 0.05% decidamos el no rechazar una hipótesis nula o aceptar la alternativa.
+
+Nuestra hipótesis nula será que la muestra que extraemos contendrá las mismas proporciones que la población con un nivel de significación estadístico.
+
+Por el caracter experimental de las pruebas de hipótesis, no se puede determinar un tamaño muestral óptimo n, sin embargo, estimaremos su tamaño inicial graficando el momento en el que el tamaño de las muestras excede el valor límite asociado al nivel de significación (y por lo tanto rechazamos nuestra hipótesis nula).
+
+Las pruebas de hipótesis son experimentos, por lo que la solución es un problema eminentemente empirico.
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(readxl)
+library(plyr)
+```
+
+```{r}
+# Leemos los datos, construímos un dataframe y obtenemos el número de observaciones:
+data <- read_excel("datos salvador.xlsx")
+data <- data.frame(data)
+nrow(data)
+
+# Obtenemos el nombre de las columnas del dataset  que cargamos:
+colnames(data)
+
+## Obtenemos las categorias y las frecuencias de la variable nominal "ClaveCob1Cob2":
+count(data, 'ClaveCob1Cob2')
+prop.table(table(data$ClaveCob1Cob2))
+## Obtenemos los porcentajes
+prop.table(table(data$ClaveCob1Cob2))*100
+
+```
+
+El problema de investigación es encontrar una muestra aleatoria que satisfaga estas cuatro proporciones simultáneamente utilizando un criterio estadístico con una significación del 99%.
+
+Aplicaremos un test de hipótesis para proporciones poblacionales en el que nuestra hipótesis cero será el que la muestra que obtengamos satisface la proporción de la data original con un 99% de significación.
+Para ello utilizaremos el estadístico p-value y lo compararemos con el valor z asociado a un 0.01% de error (dos colas).
+
+#### Hipótesis estadísticas:
+
+$H_0:$ Las categorías de nuestra muestra se distribuyen en la misma proporción que la población con un nivel de significación del 99%.
+
+$H_1:$ Las categorías de nuestra muestra se distribuyen en la misma proporción que la población con un nivel de significación del 99%.
+
+#### Valor del $\alpha =$ 0.01 para dos colas:
+
+```{r}
+alpha = .01
+z.half.alpha = qnorm(1-alpha / 2)
+c(-z.half.alpha , z.half.alpha)
+
+```
+#### Cálculo del estadístico p-value:
+
+Como ejercicio consideremos una muestra que sea el total de la poblacion y apliquemos el estadistico p-value. Observaremos que éste tiende a 0 para todas las categorías (y no es cero exacto por el problema del redondeo computacional).
+
+$Z=\frac{{\hat{p}}-{p}_{0}}{\sqrt{\frac{{p}_{0}(1-{p}_{0})}{n}}}$
+
+
+#### Muestra igual a la poblacion total:
+
+```{r}
+
+data_m <- data[sample(NROW(data), NROW(data)*(1 - 0)),] 
+n = nrow(data_m)
+n
+
+head(data_m,10)
+pbar = prop.table(table(data_m$ClaveCob1Cob2))
+pbar 
+#pbar[1]
+
+p0_BB = 0.30086528 # constante
+p0_BNoB = 0.02918448
+p0_NoBB = 0.03203526
+p0_NoBNoB = 0.63791499
+
+z_BB = (pbar[1] - p0_BB)/sqrt(p0_BB*(1-p0_BB)/n)
+z_BNoB = (pbar[2] - p0_BNoB)/sqrt(p0_BNoB*(1-p0_BNoB)/n)
+z_NoBB = (pbar[3] - p0_NoBB)/sqrt(p0_NoBB*(1-p0_NoBB)/n)
+z_NoBNoB = (pbar[4] - p0_NoBNoB)/sqrt(p0_NoBNoB*(1-p0_NoBNoB)/n)
+
+```
+Observamos que el estadistico p-value tiende a cero:
+```{r}
+z_BB
+z_BNoB
+z_NoBB
+z_NoBNoB
+```
+Mientras menor sea la muestra cada vez será mayor el estadístico p-value hasta que alcance el valor limite para alpha = .01, z = [-2.575829; 2.575829]
+
+
+Como hemos señalado, no puede ser aslcanzado un tamaño muestral óptimo por la naturaleza aleatoria de la extraccion, cada vez dará un p-value distinto aunque aproximado a medida que aumenta el tamaño muestral.
+
+Podemos creer que una muestra de 500 es aproximadamente siempre válida:
+
+```{r}
+data_sub_m <- data[sample(NROW(data), NROW(data)*(1 - 0.99905)),] 
+
+tamanio_subdata = nrow(data_sub_m)
+tamanio_subdata
+
+head(data_sub_m,10)
+pbar = prop.table(table(data_sub_m$ClaveCob1Cob2))
+pbar 
+
+z_BB = (pbar[1] - p0_BB)/sqrt(p0_BB*(1-p0_BB)/tamanio_subdata)
+z_BNoB = (pbar[2] - p0_BNoB)/sqrt(p0_BNoB*(1-p0_BNoB)/tamanio_subdata)
+z_NoBB = (pbar[3] - p0_NoBB)/sqrt(p0_NoBB*(1-p0_NoBB)/tamanio_subdata)
+z_NoBNoB = (pbar[4] - p0_NoBNoB)/sqrt(p0_NoBNoB*(1-p0_NoBNoB)/tamanio_subdata)
+
+z_BB
+z_BNoB
+z_NoBB
+z_NoBNoB
+
+```
+Grafiquemos los p_value para cada una de nuestras categorías para determinar cuando se acerca al valor límite en el que se rechaza la hipótesis nula (línea punteada roja).
+
+```{r}
+# bosque a bosque
+z_BB
+```
+
+### Grafica de los p_values:
+```{r}
+my_seq <- seq(0.01, 0.5, by=0.01)
+# my_seq <- seq(1, 527575, by=1)
+# my_seq <- seq(1, 527575, by=1000)
+z_Bos_Bos <- c()
+z_Bos_no_Bos <- c()
+z_No_Bos_Bos <- c()
+z_No_Bos_no_Bos <- c()
+muestras_decrecientes <- data[sample(NROW(data), NROW(data)*(1 - 0)),] 
+# muestras_decrecientes
+for (i in my_seq)
+{
+# aca ocurre un efecto: mientras mas pequena es la muestra, mayor es la tajada que se extrae
+        muestras_decrecientes <- muestras_decrecientes[sample(NROW(muestras_decrecientes), NROW(muestras_decrecientes)*(1 - i)),] 
+        
+        # muestras_decrecientes <- muestras_decrecientes[-sample(i)]
+        
+        n_row = nrow(muestras_decrecientes)    
+        
+        pbar = prop.table(table(muestras_decrecientes$ClaveCob1Cob2))
+        
+        z_Bosque_Bosque = (pbar[1] - p0_BB)/sqrt(p0_BB*(1-p0_BB)/n_row)
+        z_Bos_Bos <- append(z_Bos_Bos, z_Bosque_Bosque) 
+        
+        z_Bosque_no_Bosque = (pbar[2] - p0_BNoB)/sqrt(p0_BNoB*(1-p0_BNoB)/n_row)
+        z_Bos_no_Bos <- append(z_Bos_no_Bos, z_Bosque_no_Bosque)  
+        
+        z_No_Bosque_Bosque = (pbar[3] - p0_NoBB)/sqrt(p0_NoBB*(1-p0_NoBB)/n_row)
+        z_No_Bos_Bos <- append(z_No_Bos_Bos, z_No_Bosque_Bosque)  
+        
+        z_No_Bosque_no_Bosque = (pbar[4] - p0_NoBNoB)/sqrt(p0_NoBNoB*(1-p0_NoBNoB)/n_row)
+        z_No_Bos_no_Bos <- append(z_No_Bos_no_Bos, z_No_Bosque_no_Bosque)  
+        
+}
+
+
+# Gráfica del p-value para Bosque Bosque
+
+z_Bos_Bos
+head(z_Bos_Bos,10)
+plot(z_Bos_Bos, type="l", col="blue", lwd=1, xlab="Tamaño muestral")
+abline(h=-2.575829, col="red", lwd=0.5, lty=6)
+abline(h=2.575829, col="red", lwd=0.5, lty=6)
+# Gráfica del p-value para Bosque no Bosque
+
+head(z_Bos_no_Bos,10)
+plot(z_Bos_no_Bos, type="l", col="green", lwd=1, xlab="Tamaño muestral")
+abline(h=-2.575829, col="red", lwd=0.5, lty=6)
+abline(h=2.575829, col="red", lwd=0.5, lty=6)
+# Gráfica del p-value para No Bosque Bosque
+
+head(z_No_Bos_Bos,10)
+plot(z_No_Bos_Bos, type="l", col="magenta", lwd=1, xlab="Tamaño muestral")
+abline(h=-2.575829, col="red", lwd=0.5, lty=6)
+abline(h=2.575829, col="red", lwd=0.5, lty=6)
+# Gráfica del p-value para No Bosque no Bosque
+head(z_No_Bos_no_Bos,10)
+plot(z_No_Bos_no_Bos, type="l", col="purple", lwd=1, xlab="Tamaño muestral")
+abline(h=-2.575829, col="red", lwd=0.5, lty=6)
+abline(h=2.575829, col="red", lwd=0.5, lty=6)
+```
+
+#### Conclusión
+
+Podemos extraer una muestra inicial con el 60% de la población y aplicarle el test estadístico p-value para corroborar que ésta muestra específica sea representativa de la población.
+
+```{r}
+#
+muestras_decrecientes
+#
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
